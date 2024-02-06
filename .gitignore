@@ -1,0 +1,8 @@
+*
+!*/
+!*.*
+nimble.develop
+nimble.paths
+.idea
+vendor/
+.vscode/
