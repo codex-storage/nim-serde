@@ -1,6 +1,6 @@
 version = "0.1.0"
-author = "nim json serde authors"
-description = "tests for nim json serde library"
+author = "nim serde authors"
+description = "tests for nim serde library"
 license = "MIT"
 
 requires "asynctest >= 0.5.1 & < 0.6.0"

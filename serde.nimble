@@ -1,8 +1,8 @@
 # Package
 
 version       = "0.1.0"
-author        = "nim-json authors"
-description   = "Drop-in replacement for std/json, with easy-to-use json serialization capabilities."
+author        = "nim-serde authors"
+description   = "Easy-to-use serialization capabilities (currently json only), with a drop-in replacement for std/json."
 license       = "MIT"
 skipDirs      = @["tests"]
 
