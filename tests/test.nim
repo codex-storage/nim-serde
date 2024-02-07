@@ -1,7 +1,7 @@
-import ./testPragmas
-import ./testSerialize
-import ./testSerializeModes
-import ./testDeserialize
-import ./testDeserializeModes
+import ./json/testDeserialize
+import ./json/testDeserializeModes
+import ./json/testPragmas
+import ./json/testSerialize
+import ./json/testSerializeModes
 
 {.warning[UnusedImport]:off.}

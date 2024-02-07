@@ -5,7 +5,7 @@ import pkg/stint
 import pkg/serde
 import pkg/questionable
 
-import ./helpers
+import ../helpers
 
 suite "json serialization - serialize":
 
