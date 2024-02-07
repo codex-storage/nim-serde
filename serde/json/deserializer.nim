@@ -12,13 +12,13 @@ import pkg/stint
 import pkg/questionable
 import pkg/questionable/results
 
-import ./common
+import ./parser
 import ./errors
 import ./stdjson
 import ./pragmas
 import ./types
 
-export common
+export parser
 export chronicles except toJson
 export stdjson
 export pragmas
@@ -281,11 +281,11 @@ proc fromJson*(
   _: type JsonNode,
   jsn: string
 ): ?!JsonNode =
-  return common.parseJson(jsn)
+  return parser.parseJson(jsn)
 
 proc fromJson*[T: ref object or object](
   _: type T,
   jsn: string
 ): ?!T =
-  let jsn = ? common.parseJson(jsn) # full qualification required in-module only
+  let jsn = ? parser.parseJson(jsn) # full qualification required in-module only
   T.fromJson(jsn)
