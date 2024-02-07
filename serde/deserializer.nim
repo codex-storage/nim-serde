@@ -1,5 +1,4 @@
 
-# import std/json as stdjson except `%`, `%*`
 import std/macros
 import std/options
 import std/sequtils
@@ -13,13 +12,17 @@ import pkg/stint
 import pkg/questionable
 import pkg/questionable/results
 
-import ./common # parseJson, std/json except `%`, `%*`
+import ./common
+import ./errors
+import ./json
 import ./pragmas
 import ./types
 
 export common
 export chronicles except toJson
+export json
 export pragmas
+export results
 export sets
 export types
 
@@ -27,41 +30,6 @@ export types
 
 logScope:
   topics = "json deserialization"
-
-proc mapErrTo[E1: ref CatchableError, E2: SerdeError](
-  e1: E1,
-  _: type E2,
-  msg: string = e1.msg): ref E2 =
-
-  return newException(E2, msg, e1)
-
-proc newSerdeError(msg: string): ref SerdeError =
-  newException(SerdeError, msg)
-
-proc newUnexpectedKindError(
-  expectedType: type,
-  expectedKinds: string,
-  json: JsonNode
-): ref UnexpectedKindError =
-  let kind = if json.isNil: "nil"
-             else: $json.kind
-  newException(UnexpectedKindError,
-    "deserialization to " & $expectedType & " failed: expected " &
-    expectedKinds & " but got " & $kind)
-
-proc newUnexpectedKindError(
-  expectedType: type,
-  expectedKinds: set[JsonNodeKind],
-  json: JsonNode
-): ref UnexpectedKindError =
-  newUnexpectedKindError(expectedType, $expectedKinds, json)
-
-proc newUnexpectedKindError(
-  expectedType: type,
-  expectedKind: JsonNodeKind,
-  json: JsonNode
-): ref UnexpectedKindError =
-  newUnexpectedKindError(expectedType, {expectedKind}, json)
 
 template expectJsonKind(
   expectedType: type,
@@ -269,7 +237,7 @@ proc fromJson*[T: ref object or object](
 
     of OptOut:
       if opts.ignore:
-        debug "object field is opted out of deserialization ('igore' is set), skipping"
+        debug "object field is opted out of deserialization ('ignore' is set), skipping"
         skip = true
       elif hasDeserializePragma and opts.key == name:
         warn "object field marked as deserialize in OptOut mode, but 'ignore' not set, field will be deserialized"

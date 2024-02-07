@@ -1,6 +1,6 @@
-import ./common
-
 type
+  SerdeError* = object of CatchableError
+  JsonParseError* = object of SerdeError
   UnexpectedKindError* = object of SerdeError
   SerdeMode* = enum
     OptOut, ## serialize:   all object fields will be serialized, except fields marked with 'ignore'
@@ -9,3 +9,6 @@ type
             ## deserialize: only fields marked with deserialize will be deserialized
     Strict  ## serialize:   all object fields will be serialized, regardless if the field is marked with 'ignore'
             ## deserialize: object fields and json fields must match exactly
+  SerdeFieldOptions* = object
+    key*: string
+    ignore*: bool

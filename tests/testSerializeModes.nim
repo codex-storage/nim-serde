@@ -1,6 +1,5 @@
 import std/unittest
 
-# import pkg/stint
 import pkg/serde
 
 suite "json serialization, mode = OptIn":

@@ -2,19 +2,17 @@ import std/macros
 
 import ./types
 
-type
-  SerdeFieldOptions* = object
-    key*: string
-    ignore*: bool
+export types
+
+{.push raises: [].}
 
 template serialize*(key = "", ignore = false, mode = SerdeMode.OptOut) {.pragma.}
 template deserialize*(key = "", ignore = false, mode = SerdeMode.OptOut) {.pragma.}
 
 proc isDefault[T](paramValue: T): bool {.compileTime.} =
-  var result = paramValue == T.default
   when T is SerdeMode:
     return paramValue == SerdeMode.OptOut
-  return result
+  else: return paramValue == T.default
 
 template expectMissingPragmaParam*(value, pragma, name, msg) =
   static:
@@ -64,8 +62,6 @@ template getSerdeMode*(T, pragma): SerdeMode =
     #    Type is annotated, mode defaults to OptIn for serialization and OptOut
     #    for deserialization
     when astToStr(pragma) == "serialize":
-      static: echo "decided default mode for ", T, "serialize, OptIn"
       SerdeMode.OptIn
     elif astToStr(pragma) == "deserialize":
-      static: echo "decided default mode for ", T, " deserialize, OptOut"
       SerdeMode.OptOut

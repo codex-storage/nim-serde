@@ -1,9 +1,7 @@
 import std/math
 import std/options
-import std/strformat
 import std/strutils
 import std/unittest
-import pkg/stew/byteutils
 import pkg/stint
 import pkg/serde
 import pkg/questionable

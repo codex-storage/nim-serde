@@ -1,7 +1,5 @@
-# import std/json as stdjson except `%`, `%*`
 import std/macros
 import std/options
-import std/sets
 import std/strutils
 import std/tables
 import std/typetraits
@@ -11,15 +9,13 @@ import pkg/questionable
 import pkg/stew/byteutils
 import pkg/stint
 
-import ./common
+import ./json
 import ./pragmas
 import ./types
 
-# export stdjson except `%`, `%*`, parseJson
 export chronicles except toJson
-export common
+export json
 export pragmas
-export sets
 export types
 
 {.push raises: [].}
@@ -85,7 +81,6 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
 
     let opts = getSerdeFieldOptions(serialize, name, value)
     let hasSerialize = value.hasCustomPragma(serialize)
-    echo T, " hasSerialize: ", hasSerialize
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
     case mode:

@@ -4,7 +4,7 @@ version       = "0.1.0"
 author        = "nim-json authors"
 description   = "Drop-in replacement for std/json, with easy-to-use json serialization capabilities."
 license       = "MIT"
-srcDir        = "src"
+skipDirs      = @["tests"]
 
 
 # Dependencies
