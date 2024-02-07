@@ -157,15 +157,38 @@ Type fields can be annotated with `{.serialize.}` and `{.deserialize.}` and prop
 For example,
 
 ```nim
-type MyObj {.serialize(mode=OptOut).} = object
-  field1 {.serialize("mykey").}: bool
-  field2: bool
+import pkg/serde/json
 
-# equivalent to
+type
+  Person {.serialize(mode=OptOut), deserialize(mode=OptIn).} = object
+    id {.serialize(ignore=true), deserialize(key="personid").}: int
+    name: string
+    birthYear: int
+    address: string
+    phone: string
 
-type MyObj {.serialize(mode=OptOut).} = object
-  field1 {.serialize(key="mykey", ignore=true).}: bool
-  field2: bool
+let person = Person(
+              name: "Lloyd Christmas",
+              birthYear: 1970,
+              address: "123 Sesame Street, Providence, Rhode Island  12345",
+              phone: "555-905-justgivemethedamnnumber!⛽️🔥")
+
+let createRequest = """{
+  "name": "Lloyd Christmas",
+  "birthYear": 1970,
+  "address": "123 Sesame Street, Providence, Rhode Island  12345",
+  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
+}"""
+assert person.toJson(pretty=true) == createRequest
+
+let createResponse = """{
+  "personid": 1,
+  "name": "Lloyd Christmas",
+  "birthYear": 1970,
+  "address": "123 Sesame Street, Providence, Rhode Island  12345",
+  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
+}"""
+assert !Person.fromJson(createResponse) == Person(id: 1)
 ```
 
 ### `key`
