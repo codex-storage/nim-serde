@@ -1,6 +1,5 @@
 import std/math
 import std/options
-import std/strutils
 import std/unittest
 import pkg/stint
 import pkg/serde
@@ -8,14 +7,14 @@ import pkg/questionable
 import pkg/questionable/results
 
 suite "json serialization - deserialize":
-
   test "deserializes NaN float":
     check %NaN == newJString("nan")
 
   test "deserialize enum":
     type MyEnum = enum
-      First,
+      First
       Second
+
     let json = newJString("Second")
     check !MyEnum.fromJson(json) == Second
 
@@ -70,11 +69,13 @@ suite "json serialization - deserialize":
 
     let expected = MyObj(mystring: "abc", myint: 123, myoption: some true)
 
-    let json = !parseJson("""{
-                              "mystring": "abc",
-                              "myint": 123,
-                              "myoption": true
-                            }""")
+    let json =
+      !"""{
+            "mystring": "abc",
+            "myint": 123,
+            "myoption": true
+          }""".parseJson
+
     check !MyObj.fromJson(json) == expected
 
   test "ignores serialize pragma when deserializing":
@@ -84,10 +85,11 @@ suite "json serialization - deserialize":
 
     let expected = MyObj(mystring: "abc", mybool: true)
 
-    let json = !parseJson("""{
-                              "mystring": "abc",
-                              "mybool": true
-                            }""")
+    let json =
+      !"""{
+            "mystring": "abc",
+            "mybool": true
+          }""".parseJson
 
     check !MyObj.fromJson(json) == expected
 
@@ -98,11 +100,12 @@ suite "json serialization - deserialize":
 
     let expected = MyObj(mystring: "abc", mybool: true)
 
-    let json = !"""{
-                    "mystring": "abc",
-                    "mybool": true,
-                    "extra": "extra"
-                  }""".parseJson
+    let json =
+      !"""{
+            "mystring": "abc",
+            "mybool": true,
+            "extra": "extra"
+          }""".parseJson
     check !MyObj.fromJson(json) == expected
 
   test "deserializes objects with less fields":
@@ -112,9 +115,10 @@ suite "json serialization - deserialize":
 
     let expected = MyObj(mystring: "abc", mybool: false)
 
-    let json = !"""{
-                    "mystring": "abc"
-                  }""".parseJson
+    let json =
+      !"""{
+            "mystring": "abc"
+          }""".parseJson
     check !MyObj.fromJson(json) == expected
 
   test "deserializes ref objects":
@@ -124,10 +128,11 @@ suite "json serialization - deserialize":
 
     let expected = MyRef(mystring: "abc", myint: 1)
 
-    let json = !"""{
-                    "mystring": "abc",
-                    "myint": 1
-                  }""".parseJson
+    let json =
+      !"""{
+            "mystring": "abc",
+            "myint": 1
+          }""".parseJson
 
     let deserialized = !MyRef.fromJson(json)
     check deserialized.mystring == expected.mystring

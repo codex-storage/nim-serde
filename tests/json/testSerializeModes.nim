@@ -3,7 +3,6 @@ import std/unittest
 import pkg/serde
 
 suite "json serialization, mode = OptIn":
-
   test "serializes with default mode OptIn when object not marked with serialize":
     type MyObj = object
       field1 {.serialize.}: bool
@@ -17,7 +16,7 @@ suite "json serialization, mode = OptIn":
       field1 {.serialize.}: bool
       field2: bool
 
-    type MyObjMarked {.serialize(mode=OptIn).} = object
+    type MyObjMarked {.serialize(mode = OptIn).} = object
       field1 {.serialize.}: bool
       field2: bool
 
@@ -36,14 +35,12 @@ suite "json serialization, mode = OptIn":
   test "does not serialize ignored field":
     type MyObj = object
       field1 {.serialize.}: bool
-      field2 {.serialize(ignore=true).}: bool
+      field2 {.serialize(ignore = true).}: bool
 
     let obj = MyObj(field1: true, field2: true)
     check obj.toJson == """{"field1":true}"""
 
-
 suite "json serialization, mode = OptOut":
-
   test "serialize on object definition defaults to OptOut mode, serializes all fields":
     type MyObj {.serialize.} = object
       field1: bool
@@ -57,7 +54,7 @@ suite "json serialization, mode = OptOut":
       field1: bool
       field2: bool
 
-    type MyObjMarked {.serialize(mode=OptOut).} = object
+    type MyObjMarked {.serialize(mode = OptOut).} = object
       field1: bool
       field2: bool
 
@@ -67,7 +64,7 @@ suite "json serialization, mode = OptOut":
 
   test "ignores field when marked with ignore":
     type MyObj {.serialize.} = object
-      field1 {.serialize(ignore=true).}: bool
+      field1 {.serialize(ignore = true).}: bool
       field2: bool
 
     let obj = MyObj(field1: true, field2: true)
@@ -81,11 +78,9 @@ suite "json serialization, mode = OptOut":
     let obj = MyObj(field1: true, field2: true)
     check obj.toJson == """{"test":true,"field2":true}"""
 
-
 suite "json serialization - mode = Strict":
-
   test "serializes all fields in Strict mode":
-    type MyObj {.serialize(mode=Strict).} = object
+    type MyObj {.serialize(mode = Strict).} = object
       field1: bool
       field2: bool
 
@@ -93,8 +88,8 @@ suite "json serialization - mode = Strict":
     check obj.toJson == """{"field1":true,"field2":true}"""
 
   test "ignores ignored fields in Strict mode":
-    type MyObj {.serialize(mode=Strict).} = object
-      field1 {.serialize(ignore=true).}: bool
+    type MyObj {.serialize(mode = Strict).} = object
+      field1 {.serialize(ignore = true).}: bool
       field2: bool
 
     let obj = MyObj(field1: true, field2: true)

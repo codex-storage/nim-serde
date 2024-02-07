@@ -1,5 +1,4 @@
 import std/options
-import std/strutils
 import std/unittest
 import pkg/stint
 import pkg/serde
@@ -8,9 +7,8 @@ import pkg/questionable
 import ../helpers
 
 suite "json serialization - serialize":
-
   test "serializes UInt256 to non-hex string representation":
-    check (% 100000.u256) == newJString("100000")
+    check (%100000.u256) == newJString("100000")
 
   test "serializes sequence to an array":
     let json = % @[1, 2, 3]
@@ -50,10 +48,7 @@ suite "json serialization - serialize":
     let myobj = MyObj(mystring: "abc", myint: 123, myoption: some true)
     let mystuint = 100000.u256
 
-    let json = %*{
-      "myobj": myobj,
-      "mystuint": mystuint
-    }
+    let json = %*{"myobj": myobj, "mystuint": mystuint}
 
     let expected = """{
                         "myobj": {
@@ -72,7 +67,7 @@ suite "json serialization - serialize":
       myint {.serialize.}: int
       mybool: bool
 
-    let obj = % MyObj(mystring: "abc", myint: 1, mybool: true)
+    let obj = %MyObj(mystring: "abc", myint: 1, mybool: true)
 
     let expected = """{
                         "mystring": "abc",
@@ -86,7 +81,7 @@ suite "json serialization - serialize":
       mystring {.serialize.}: string
       myint {.serialize.}: int
 
-    let obj = % MyRef(mystring: "abc", myint: 1)
+    let obj = %MyRef(mystring: "abc", myint: 1)
 
     let expected = """{
                         "mystring": "abc",
@@ -111,9 +106,10 @@ suite "json serialization - serialize":
       myint {.serialize.}: int
 
     let obj = MyObj(mystring: "abc", myint: 1)
-    let expected = """{
+    let expected =
+      """{
   "mystring": "abc",
   "myint": 1
 }"""
 
-    check obj.toJson(pretty=true) == expected
+    check obj.toJson(pretty = true) == expected

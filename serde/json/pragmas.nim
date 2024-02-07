@@ -12,22 +12,26 @@ template deserialize*(key = "", ignore = false, mode = SerdeMode.OptOut) {.pragm
 proc isDefault[T](paramValue: T): bool {.compileTime.} =
   when T is SerdeMode:
     return paramValue == SerdeMode.OptOut
-  else: return paramValue == T.default
+  else:
+    return paramValue == T.default
 
 template expectMissingPragmaParam*(value, pragma, name, msg) =
   static:
     when value.hasCustomPragma(pragma):
       const params = value.getCustomPragmaVal(pragma)
       for paramName, paramValue in params.fieldPairs:
-
         if paramName == name and not paramValue.isDefault:
           raiseAssert(msg)
 
 template getSerdeFieldOptions*(pragma, fieldName, fieldValue): SerdeFieldOptions =
   var opts = SerdeFieldOptions(key: fieldName, ignore: false)
   when fieldValue.hasCustomPragma(pragma):
-    fieldValue.expectMissingPragmaParam(pragma, "mode",
-      "Cannot set " & astToStr(pragma) & " 'mode' on '" & fieldName & "' field defintion.")
+    fieldValue.expectMissingPragmaParam(
+      pragma,
+      "mode",
+      "Cannot set " & astToStr(pragma) & " 'mode' on '" & fieldName &
+        "' field defintion.",
+    )
     let (key, ignore, _) = fieldValue.getCustomPragmaVal(pragma)
     opts.ignore = ignore
     if key != "":
@@ -36,12 +40,16 @@ template getSerdeFieldOptions*(pragma, fieldName, fieldValue): SerdeFieldOptions
 
 template getSerdeMode*(T, pragma): SerdeMode =
   when T.hasCustomPragma(pragma):
-    T.expectMissingPragmaParam(pragma, "key",
-      "Cannot set " & astToStr(pragma) & " 'key' on '" & $T &
-      "' type definition.")
-    T.expectMissingPragmaParam(pragma, "ignore",
-      "Cannot set " & astToStr(pragma) & " 'ignore' on '" & $T &
-      "' type definition.")
+    T.expectMissingPragmaParam(
+      pragma,
+      "key",
+      "Cannot set " & astToStr(pragma) & " 'key' on '" & $T & "' type definition.",
+    )
+    T.expectMissingPragmaParam(
+      pragma,
+      "ignore",
+      "Cannot set " & astToStr(pragma) & " 'ignore' on '" & $T & "' type definition.",
+    )
     let (_, _, mode) = T.getCustomPragmaVal(pragma)
     mode
   else:

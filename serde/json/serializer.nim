@@ -23,7 +23,8 @@ export types
 logScope:
   topics = "json serialization"
 
-func `%`*(s: string): JsonNode = newJString(s)
+func `%`*(s: string): JsonNode =
+  newJString(s)
 
 func `%`*(n: uint): JsonNode =
   if n > cast[uint](int.high):
@@ -31,7 +32,8 @@ func `%`*(n: uint): JsonNode =
   else:
     newJInt(BiggestInt(n))
 
-func `%`*(n: int): JsonNode = newJInt(n)
+func `%`*(n: int): JsonNode =
+  newJInt(n)
 
 func `%`*(n: BiggestUInt): JsonNode =
   if n > cast[BiggestUInt](BiggestInt.high):
@@ -39,42 +41,56 @@ func `%`*(n: BiggestUInt): JsonNode =
   else:
     newJInt(BiggestInt(n))
 
-func `%`*(n: BiggestInt): JsonNode = newJInt(n)
+func `%`*(n: BiggestInt): JsonNode =
+  newJInt(n)
 
 func `%`*(n: float): JsonNode =
-  if n != n: newJString("nan")
-  elif n == Inf: newJString("inf")
-  elif n == -Inf: newJString("-inf")
-  else: newJFloat(n)
+  if n != n:
+    newJString("nan")
+  elif n == Inf:
+    newJString("inf")
+  elif n == -Inf:
+    newJString("-inf")
+  else:
+    newJFloat(n)
 
-func `%`*(b: bool): JsonNode = newJBool(b)
+func `%`*(b: bool): JsonNode =
+  newJBool(b)
 
 func `%`*(keyVals: openArray[tuple[key: string, val: JsonNode]]): JsonNode =
-  if keyVals.len == 0: return newJArray()
+  if keyVals.len == 0:
+    return newJArray()
   let jObj = newJObject()
-  for key, val in items(keyVals): jObj.fields[key] = val
+  for key, val in items(keyVals):
+    jObj.fields[key] = val
   jObj
 
-template `%`*(j: JsonNode): JsonNode = j
+template `%`*(j: JsonNode): JsonNode =
+  j
 
-func `%`*[T](table: Table[string, T]|OrderedTable[string, T]): JsonNode =
+func `%`*[T](table: Table[string, T] | OrderedTable[string, T]): JsonNode =
   let jObj = newJObject()
-  for k, v in table: jObj[k] = ? %v
+  for k, v in table:
+    jObj[k] = ? %v
   jObj
 
 func `%`*[T](opt: Option[T]): JsonNode =
-  if opt.isSome: %(opt.get) else: newJNull()
+  if opt.isSome:
+    %(opt.get)
+  else:
+    newJNull()
 
 proc `%`*[T: object or ref object](obj: T): JsonNode =
-
   let jsonObj = newJObject()
-  let o = when T is ref object: obj[]
-          else: obj
+  let o =
+    when T is ref object:
+      obj[]
+    else:
+      obj
 
   let mode = T.getSerdeMode(serialize)
 
   for name, value in o.fieldPairs:
-
     logScope:
       field = $T & "." & name
       mode
@@ -83,21 +99,19 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     let hasSerialize = value.hasCustomPragma(serialize)
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
-    case mode:
+    case mode
     of OptIn:
       if not hasSerialize:
         debug "object field not marked with serialize, skipping"
         skip = true
       elif opts.ignore:
         skip = true
-
     of OptOut:
       if opts.ignore:
         debug "object field opted out of serialization ('ignore' is set), skipping"
         skip = true
       elif hasSerialize and opts.key == name: # all serialize params are default
         warn "object field marked as serialize in OptOut mode, but 'ignore' not set, field will be serialized"
-
     of Strict:
       if opts.ignore:
         # unable to figure out a way to make this a compile time check
@@ -108,22 +122,27 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
 
   jsonObj
 
-proc `%`*(o: enum): JsonNode = % $o
+proc `%`*(o: enum): JsonNode =
+  % $o
 
-func `%`*(stint: StInt|StUint): JsonNode = %stint.toString
+func `%`*(stint: StInt | StUint): JsonNode =
+  %stint.toString
 
-func `%`*(cstr: cstring): JsonNode = % $cstr
+func `%`*(cstr: cstring): JsonNode =
+  % $cstr
 
-func `%`*(arr: openArray[byte]): JsonNode = % arr.to0xHex
+func `%`*(arr: openArray[byte]): JsonNode =
+  %arr.to0xHex
 
 func `%`*[T](elements: openArray[T]): JsonNode =
   let jObj = newJArray()
-  for elem in elements: jObj.add(%elem)
+  for elem in elements:
+    jObj.add(%elem)
   jObj
 
 func `%`*[T: distinct](id: T): JsonNode =
   type baseType = T.distinctBase
-  % baseType(id)
+  %baseType(id)
 
 proc toJson*[T](item: T, pretty = false): string =
   if pretty:
@@ -134,13 +153,15 @@ proc toJson*[T](item: T, pretty = false): string =
 proc toJsnImpl(x: NimNode): NimNode =
   case x.kind
   of nnkBracket: # array
-    if x.len == 0: return newCall(bindSym"newJArray")
+    if x.len == 0:
+      return newCall(bindSym"newJArray")
     result = newNimNode(nnkBracket)
     for i in 0 ..< x.len:
       result.add(toJsnImpl(x[i]))
     result = newCall(bindSym("%", brOpen), result)
   of nnkTableConstr: # object
-    if x.len == 0: return newCall(bindSym"newJObject")
+    if x.len == 0:
+      return newCall(bindSym"newJObject")
     result = newNimNode(nnkTableConstr)
     for i in 0 ..< x.len:
       x[i].expectKind nnkExprColonExpr
@@ -152,8 +173,10 @@ proc toJsnImpl(x: NimNode): NimNode =
   of nnkNilLit:
     result = newCall(bindSym"newJNull")
   of nnkPar:
-    if x.len == 1: result = toJsnImpl(x[0])
-    else: result = newCall(bindSym("%", brOpen), x)
+    if x.len == 1:
+      result = toJsnImpl(x[0])
+    else:
+      result = newCall(bindSym("%", brOpen), x)
   else:
     result = newCall(bindSym("%", brOpen), x)
 
