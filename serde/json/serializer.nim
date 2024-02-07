@@ -125,7 +125,11 @@ func `%`*[T: distinct](id: T): JsonNode =
   type baseType = T.distinctBase
   % baseType(id)
 
-proc toJson*[T](item: T): string = $(%item)
+proc toJson*[T](item: T, pretty = false): string =
+  if pretty:
+    (%item).pretty
+  else:
+    $(%item)
 
 proc toJsnImpl(x: NimNode): NimNode =
   case x.kind

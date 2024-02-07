@@ -94,3 +94,26 @@ suite "json serialization - serialize":
                       }""".flatten
 
     check $obj == expected
+
+  test "serializes to string with toJson":
+    type MyObj = object
+      mystring {.serialize.}: string
+      myint {.serialize.}: int
+
+    let obj = MyObj(mystring: "abc", myint: 1)
+    let expected = """{"mystring":"abc","myint":1}"""
+
+    check obj.toJson == expected
+
+  test "serializes prettied to string with toJson":
+    type MyObj = object
+      mystring {.serialize.}: string
+      myint {.serialize.}: int
+
+    let obj = MyObj(mystring: "abc", myint: 1)
+    let expected = """{
+  "mystring": "abc",
+  "myint": 1
+}"""
+
+    check obj.toJson(pretty=true) == expected
