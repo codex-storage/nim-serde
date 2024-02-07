@@ -1,6 +1,6 @@
-from std/json import JsonNode, JsonNodeKind
 import std/sets
 
+import ./stdjson
 import ./types
 
 {.push raises: [].}

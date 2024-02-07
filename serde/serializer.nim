@@ -9,12 +9,12 @@ import pkg/questionable
 import pkg/stew/byteutils
 import pkg/stint
 
-import ./json
+import ./stdjson
 import ./pragmas
 import ./types
 
 export chronicles except toJson
-export json
+export stdjson
 export pragmas
 export types
 

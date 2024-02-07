@@ -14,13 +14,13 @@ import pkg/questionable/results
 
 import ./common
 import ./errors
-import ./json
+import ./stdjson
 import ./pragmas
 import ./types
 
 export common
 export chronicles except toJson
-export json
+export stdjson
 export pragmas
 export results
 export sets
