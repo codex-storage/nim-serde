@@ -6,8 +6,9 @@ import ./types
 
 {.push raises: [].}
 
-proc parseJson*(json: string): ?!JsonNode =
-  ## fix for nim raising Exception
+proc parse*(_: type JsonNode, json: string): ?!JsonNode =
+  # Used as a replacement for `std/json.parseJson`. Will not raise Exception like in the
+  # standard library
   try:
     return stdjson.parseJson(json).catch
   except Exception as e:
