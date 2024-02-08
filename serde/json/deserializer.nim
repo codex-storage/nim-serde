@@ -229,12 +229,14 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
 
   success(res)
 
-proc fromJson*[T: ref object or object](_: type T, bytes: seq[byte]): ?!T =
-  let json = ?parse(string.fromBytes(bytes))
-  T.fromJson(json)
-
 proc fromJson*(_: type JsonNode, jsn: string): ?!JsonNode =
   return parser.parseJson(jsn)
+
+proc fromJson*[T: ref object or object](_: type T, bytes: openArray[byte]): ?!T =
+  let json = string.fromBytes(bytes)
+  static:
+    echo "typeof json after parse: ", typeof json
+  T.fromJson(json)
 
 proc fromJson*[T: ref object or object](_: type T, jsn: string): ?!T =
   let jsn = ?parser.parseJson(jsn) # full qualification required in-module only
