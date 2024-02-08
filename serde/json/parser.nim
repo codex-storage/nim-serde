@@ -11,4 +11,4 @@ proc parseJson*(json: string): ?!JsonNode =
   try:
     return stdjson.parseJson(json).catch
   except Exception as e:
-    return failure newException(JsonParseError, e.msg)
+    return failure newException(JsonParseError, e.msg, e)
