@@ -3,6 +3,7 @@ import std/options
 import std/unittest
 import pkg/stint
 import pkg/serde
+import pkg/stew/byteutils
 import pkg/questionable
 import pkg/questionable/results
 
@@ -135,5 +136,20 @@ suite "json serialization - deserialize":
           }""".parseJson
 
     let deserialized = !MyRef.fromJson(json)
+    check deserialized.mystring == expected.mystring
+    check deserialized.myint == expected.myint
+
+  test "deserializes openArray[byte]":
+    type MyRef = ref object
+      mystring: string
+      myint: int
+
+    let expected = MyRef(mystring: "abc", myint: 1)
+    let byteArray = """{
+            "mystring": "abc",
+            "myint": 1
+          }""".toBytes
+
+    let deserialized = !MyRef.fromJson(byteArray)
     check deserialized.mystring == expected.mystring
     check deserialized.myint == expected.myint
