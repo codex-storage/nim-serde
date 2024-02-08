@@ -243,6 +243,27 @@ assert res.error of SerdeError
 assert res.error.msg == "json field(s) missing in object: {\"extra\"}"
 ```
 
+## Custom types
+
+If `serde` can't de/serialize a custom type, de/serialization can be supported by
+overloading `%` and `fromJson`. For example:
+
+```nim
+type
+  Address* = distinct array[20, byte]
+  SerializationError* = object of CatchableError
+
+func `%`*(address: Address): JsonNode =
+  %($address)
+
+func fromJson(_: type Address, json: JsonNode): ?!Address =
+  expectJsonKind(Address, JString, json)
+  without address =? Address.init(json.getStr), error:
+    return failure newException(SerializationError,
+      "Failed to convert '" & $json & "' to Address: " & error.msg)
+  success address
+```
+
 ## Serializing to string (`toJson`)
 
 `toJson` is a shortcut for serializing an object into its serialized string representation:
