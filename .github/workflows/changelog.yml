@@ -10,17 +10,19 @@ jobs:
     name: Generate changelog
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      contents: write
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: "✏️ Generate release changelog"
-      uses: heinrichreimer/action-github-changelog-generator@v2.3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Commit CHANGELOG.md
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        branch: master
-        commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
-        file_pattern: CHANGELOG.md
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "✏️ Generate release changelog"
+        uses: heinrichreimer/action-github-changelog-generator@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit CHANGELOG.md
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          branch: master
+          commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
+          file_pattern: CHANGELOG.md
