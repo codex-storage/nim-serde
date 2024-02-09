@@ -49,7 +49,7 @@ suite "json serialization - deserialize":
 
   test "deserializes array to sequence":
     let expected = @[1, 2, 3]
-    let json = !"[1,2,3]".parseJson
+    let json = !JsonNode.parse("[1,2,3]")
     check !seq[int].fromJson(json) == expected
 
   test "deserializes uints int.high or smaller":
@@ -71,11 +71,13 @@ suite "json serialization - deserialize":
     let expected = MyObj(mystring: "abc", myint: 123, myoption: some true)
 
     let json =
-      !"""{
+      !JsonNode.parse(
+        """{
             "mystring": "abc",
             "myint": 123,
             "myoption": true
-          }""".parseJson
+          }"""
+      )
 
     check !MyObj.fromJson(json) == expected
 
@@ -87,10 +89,12 @@ suite "json serialization - deserialize":
     let expected = MyObj(mystring: "abc", mybool: true)
 
     let json =
-      !"""{
+      !JsonNode.parse(
+        """{
             "mystring": "abc",
             "mybool": true
-          }""".parseJson
+          }"""
+      )
 
     check !MyObj.fromJson(json) == expected
 
@@ -102,11 +106,13 @@ suite "json serialization - deserialize":
     let expected = MyObj(mystring: "abc", mybool: true)
 
     let json =
-      !"""{
+      !JsonNode.parse(
+        """{
             "mystring": "abc",
             "mybool": true,
             "extra": "extra"
-          }""".parseJson
+          }"""
+      )
     check !MyObj.fromJson(json) == expected
 
   test "deserializes objects with less fields":
@@ -117,9 +123,11 @@ suite "json serialization - deserialize":
     let expected = MyObj(mystring: "abc", mybool: false)
 
     let json =
-      !"""{
+      !JsonNode.parse(
+        """{
             "mystring": "abc"
-          }""".parseJson
+          }"""
+      )
     check !MyObj.fromJson(json) == expected
 
   test "deserializes ref objects":
@@ -130,10 +138,12 @@ suite "json serialization - deserialize":
     let expected = MyRef(mystring: "abc", myint: 1)
 
     let json =
-      !"""{
+      !JsonNode.parse(
+        """{
             "mystring": "abc",
             "myint": 1
-          }""".parseJson
+          }"""
+      )
 
     let deserialized = !MyRef.fromJson(json)
     check deserialized.mystring == expected.mystring
