@@ -108,7 +108,10 @@ OptOut
 Strict
 ```
 
-Modes can be set in the `{.serialize.}` and/or `{.deserialize.}` pragmas on type definitions. Each mode has a different meaning depending on if the type is being serialized or deserialized. Modes can be set by setting `mode` in the `serialize` or `deserialize` pragma annotation, eg:
+Modes can be set in the `{.serialize.}` and/or `{.deserialize.}` pragmas on type
+definitions. Each mode has a different meaning depending on if the type is being
+serialized or deserialized. Modes can be set by setting `mode` in the `serialize` or
+`deserialize` pragma annotation, eg:
 
 ```nim
 type MyType {.serialize(mode=Strict).} = object
@@ -126,7 +129,11 @@ type MyType {.serialize(mode=Strict).} = object
 
 ## Default modes
 
-`nim-serde` will de/serialize types if they are not annotated with `serialize` or `deserialize`, but will assume a default mode. By default, with no pragmas specified, `serde` will always serialize in `OptIn` mode, meaning any fields to b Additionally, if the types are annotated, but a mode is not specified, `serde` will assume a (possibly different) default mode.
+`nim-serde` will de/serialize types if they are not annotated with `serialize` or
+`deserialize`, but will assume a default mode. By default, with no pragmas specified,
+`serde` will always serialize in `OptIn` mode, meaning any fields to b Additionally, if
+the types are annotated, but a mode is not specified, `serde` will assume a (possibly
+different) default mode.
 
 ```nim
 # Type is not annotated
@@ -152,7 +159,8 @@ type MyObj {.serialize, deserialize.} = object
 | Default (pragma, but no mode) | `OptOut`  | `OptOut`    |
 
 ## Serde field options
-Type fields can be annotated with `{.serialize.}` and `{.deserialize.}` and properties can be set on these pragmas, determining de/serialization behavior.
+Type fields can be annotated with `{.serialize.}` and `{.deserialize.}` and properties
+can be set on these pragmas, determining de/serialization behavior.
 
 For example,
 
@@ -192,7 +200,9 @@ assert !Person.fromJson(createResponse) == Person(id: 1)
 ```
 
 ### `key`
-Specifying a `key`, will alias the field name. When seriazlizing, json will be written with `key` instead of the field name. When deserializing, the json must contain `key` for the field to be deserialized.
+Specifying a `key`, will alias the field name. When seriazlizing, json will be written
+with `key` instead of the field name. When deserializing, the json must contain `key`
+for the field to be deserialized.
 
 ### `ignore`
 Specifying `ignore`, will prevent de/serialization on the field.
@@ -207,7 +217,8 @@ Specifying `ignore`, will prevent de/serialization on the field.
 
 ## Deserialization
 
-`serde` deserializes using `fromJson`, and in all instances returns `Result[T, CatchableError]`, where `T` is the type being deserialized. For example:
+`serde` deserializes using `fromJson`, and in all instances returns `Result[T,
+CatchableError]`, where `T` is the type being deserialized. For example:
 
 ```nim
 type MyType = object
@@ -266,7 +277,8 @@ func fromJson(_: type Address, json: JsonNode): ?!Address =
 
 ## Serializing to string (`toJson`)
 
-`toJson` is a shortcut for serializing an object into its serialized string representation:
+`toJson` is a shortcut for serializing an object into its serialized string
+representation:
 
 ```nim
 import pkg/serde/json
@@ -289,9 +301,11 @@ return RestApiResponse.response(availability.toJson,
 
 ## `std/json` drop-in replacment
 
-`nim-serde` can be used as a drop-in replacement for the [standard library's `json` module](https://nim-lang.org/docs/json.html), with a few notable improvements.
+`nim-serde` can be used as a drop-in replacement for the [standard library's `json`
+module](https://nim-lang.org/docs/json.html), with a few notable improvements.
 
-Instead of importing `std/json` into your application, `pkg/serde/json` can be imported instead:
+Instead of importing `std/json` into your application, `pkg/serde/json` can be imported
+instead:
 
 ```diff
 - import std/json
@@ -316,7 +330,8 @@ expected["hello"] = newJString("world")
 assert %*{"hello": "world"} == expected
 ```
 
-As well, serialization of types can be overridden, and serialization of custom types can be introduced. Here, we are overriding the serialization of `int`:
+As well, serialization of types can be overridden, and serialization of custom types can
+be introduced. Here, we are overriding the serialization of `int`:
 
 ```nim
 import pkg/serde/json
@@ -329,7 +344,8 @@ assert 1.toJson == "2"
 
 ## `parseJson` and exception tracking
 
-Unfortunately, `std/json`'s `parseJson` can raise an `Exception`, so proper exception tracking breaks, eg
+Unfortunately, `std/json`'s `parseJson` can raise an `Exception`, so proper exception
+tracking breaks, eg
 
 ```nim
 
@@ -352,7 +368,10 @@ proc parseMe(me: string): JsonNode =
 assert """{"hello":"world"}""".parseMe == %* { "hello": "world" }
 ```
 
-This is due to `std/json`'s `parseJson` incorrectly raising `Exception`. This can be worked around by instead importing `serde` and calling its `parseJson`. Note that `serde`'s `parseJson` returns a `Result[JsonNode, CatchableError]` instead of just a plain `JsonNode` object:
+This is due to `std/json`'s `parseJson` incorrectly raising `Exception`. This can be
+worked around by instead importing `serde` and calling its `JsonNode.parse` routine.
+Note that `serde`'s `JsonNode.parse` returns a `Result[JsonNode, CatchableError]`
+instead of just a plain `JsonNode` object as in `std/json`'s `parseJson`:
 
 ```nim
 import pkg/serde/json
@@ -363,7 +382,7 @@ type
   MyAppError = object of CatchableError
 
 proc parseMe(me: string): JsonNode {.raises: [MyAppError].} =
-  without parsed =? me.parseJson, error:
+  without parsed =? JsonNode.parse(me), error:
     raise newException(MyAppError, error.msg)
   parsed
 
