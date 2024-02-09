@@ -9,6 +9,8 @@ jobs:
   generate:
     name: Generate changelog
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
     - name: Checkout
       uses: actions/checkout@v3
