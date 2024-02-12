@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   test:
@@ -11,12 +15,14 @@ jobs:
         nim: [1.6.16, stable]
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
     - name: Install Nim
-      uses: iffy/install-nim@v3
+      uses: iffy/install-nim@v4
       with:
         version: ${{ matrix.nim }}
     - name: Build
       run: nimble install -y
+
     - name: Test
       run: nimble test -y

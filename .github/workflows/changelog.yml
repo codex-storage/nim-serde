@@ -5,6 +5,7 @@ on:
     branches:
       - master
 
+
 jobs:
   changelog:
     name: Generate changelog
@@ -12,17 +13,25 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Create Token
+        id: create_token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "✏️ Generate release changelog"
         uses: heinrichreimer/action-github-changelog-generator@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit CHANGELOG.md
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: planetscale/ghcommit-action@v0.1.33
         with:
+          repo: ${{ github.repository }}
           branch: master
           commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
           file_pattern: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ steps.create_token.outputs.token }}
