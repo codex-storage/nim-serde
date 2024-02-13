@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- fix: change serializer funcs to procs  [\#7](https://github.com/codex-storage/nim-serde/pull/7) ([emizzle](https://github.com/emizzle))
 - Use token for changelog generator [\#6](https://github.com/codex-storage/nim-serde/pull/6) ([veaceslavdoina](https://github.com/veaceslavdoina))
 - Adjust workflows for changelog generation [\#5](https://github.com/codex-storage/nim-serde/pull/5) ([veaceslavdoina](https://github.com/veaceslavdoina))
 - Change parseJson to JsonNode.parse [\#4](https://github.com/codex-storage/nim-serde/pull/4) ([emizzle](https://github.com/emizzle))
