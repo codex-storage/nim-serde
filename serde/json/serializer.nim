@@ -23,28 +23,28 @@ export types
 logScope:
   topics = "json serialization"
 
-func `%`*(s: string): JsonNode =
+proc `%`*(s: string): JsonNode =
   newJString(s)
 
-func `%`*(n: uint): JsonNode =
+proc `%`*(n: uint): JsonNode =
   if n > cast[uint](int.high):
     newJString($n)
   else:
     newJInt(BiggestInt(n))
 
-func `%`*(n: int): JsonNode =
+proc `%`*(n: int): JsonNode =
   newJInt(n)
 
-func `%`*(n: BiggestUInt): JsonNode =
+proc `%`*(n: BiggestUInt): JsonNode =
   if n > cast[BiggestUInt](BiggestInt.high):
     newJString($n)
   else:
     newJInt(BiggestInt(n))
 
-func `%`*(n: BiggestInt): JsonNode =
+proc `%`*(n: BiggestInt): JsonNode =
   newJInt(n)
 
-func `%`*(n: float): JsonNode =
+proc `%`*(n: float): JsonNode =
   if n != n:
     newJString("nan")
   elif n == Inf:
@@ -54,10 +54,10 @@ func `%`*(n: float): JsonNode =
   else:
     newJFloat(n)
 
-func `%`*(b: bool): JsonNode =
+proc `%`*(b: bool): JsonNode =
   newJBool(b)
 
-func `%`*(keyVals: openArray[tuple[key: string, val: JsonNode]]): JsonNode =
+proc `%`*(keyVals: openArray[tuple[key: string, val: JsonNode]]): JsonNode =
   if keyVals.len == 0:
     return newJArray()
   let jObj = newJObject()
@@ -68,13 +68,13 @@ func `%`*(keyVals: openArray[tuple[key: string, val: JsonNode]]): JsonNode =
 template `%`*(j: JsonNode): JsonNode =
   j
 
-func `%`*[T](table: Table[string, T] | OrderedTable[string, T]): JsonNode =
+proc `%`*[T](table: Table[string, T] | OrderedTable[string, T]): JsonNode =
   let jObj = newJObject()
   for k, v in table:
     jObj[k] = ? %v
   jObj
 
-func `%`*[T](opt: Option[T]): JsonNode =
+proc `%`*[T](opt: Option[T]): JsonNode =
   if opt.isSome:
     %(opt.get)
   else:
@@ -125,22 +125,22 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
 proc `%`*(o: enum): JsonNode =
   % $o
 
-func `%`*(stint: StInt | StUint): JsonNode =
+proc `%`*(stint: StInt | StUint): JsonNode =
   %stint.toString
 
-func `%`*(cstr: cstring): JsonNode =
+proc `%`*(cstr: cstring): JsonNode =
   % $cstr
 
-func `%`*(arr: openArray[byte]): JsonNode =
+proc `%`*(arr: openArray[byte]): JsonNode =
   %arr.to0xHex
 
-func `%`*[T](elements: openArray[T]): JsonNode =
+proc `%`*[T](elements: openArray[T]): JsonNode =
   let jObj = newJArray()
   for elem in elements:
     jObj.add(%elem)
   jObj
 
-func `%`*[T: distinct](id: T): JsonNode =
+proc `%`*[T: distinct](id: T): JsonNode =
   type baseType = T.distinctBase
   %baseType(id)
 
