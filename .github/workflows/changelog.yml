@@ -25,6 +25,8 @@ jobs:
 
       - name: "✏️ Generate release changelog"
         uses: heinrichreimer/action-github-changelog-generator@v2.3
+        with:
+          token: ${{ steps.create_token.outputs.token }}
 
       - name: Commit CHANGELOG.md
         uses: planetscale/ghcommit-action@v0.1.33
