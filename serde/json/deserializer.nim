@@ -234,8 +234,6 @@ proc fromJson*(_: type JsonNode, json: string): ?!JsonNode =
 
 proc fromJson*[T: ref object or object](_: type T, bytes: openArray[byte]): ?!T =
   let json = string.fromBytes(bytes)
-  static:
-    echo "typeof json after parse: ", typeof json
   T.fromJson(json)
 
 proc fromJson*[T: ref object or object](_: type T, json: string): ?!T =
