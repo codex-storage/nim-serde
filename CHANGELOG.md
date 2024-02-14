@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/codex-storage/nim-serde/tree/HEAD)
 
-[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.0.0...HEAD)
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.1.0...HEAD)
+
+**Merged pull requests:**
+
+- run changelog workflow on release [\#12](https://github.com/codex-storage/nim-serde/pull/12) ([emizzle](https://github.com/emizzle))
+
+## [v1.1.0](https://github.com/codex-storage/nim-serde/tree/v1.1.0) (2024-02-14)
+
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.0.0...v1.1.0)
 
 **Merged pull requests:**
 
