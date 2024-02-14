@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- chore: v1.1.0 [\#11](https://github.com/codex-storage/nim-serde/pull/11) ([emizzle](https://github.com/emizzle))
 - deserialize non-prefixed stuint [\#10](https://github.com/codex-storage/nim-serde/pull/10) ([emizzle](https://github.com/emizzle))
 - deserialize seq\[T\] and Option\[T\] from string [\#9](https://github.com/codex-storage/nim-serde/pull/9) ([emizzle](https://github.com/emizzle))
 
