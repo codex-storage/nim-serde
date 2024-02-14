@@ -183,3 +183,59 @@ suite "json serialization - deserialize":
     let deserialized = !MyRef.fromJson(byteArray)
     check deserialized.mystring == expected.mystring
     check deserialized.myint == expected.myint
+
+suite "deserialize from string":
+
+  test "deserializes objects from string":
+    type MyObj = object
+      mystring: string
+      myint: int
+
+    let expected = MyObj(mystring: "abc", myint: 1)
+    let myObjJson = """{
+            "mystring": "abc",
+            "myint": 1
+          }"""
+
+    check !MyObj.fromJson(myObjJson) == expected
+
+  test "deserializes ref objects from string":
+    type MyRef = ref object
+      mystring: string
+      myint: int
+
+    let expected = MyRef(mystring: "abc", myint: 1)
+    let myRefJson = """{
+            "mystring": "abc",
+            "myint": 1
+          }"""
+
+    let deserialized = !MyRef.fromJson(myRefJson)
+    check deserialized.mystring == expected.mystring
+    check deserialized.myint == expected.myint
+
+  test "deserializes seq[T] from string":
+    type MyObj = object
+      mystring: string
+      myint: int
+
+    let expected = @[MyObj(mystring: "abc", myint: 1)]
+    let myObjsJson = """[{
+            "mystring": "abc",
+            "myint": 1
+          }]"""
+
+    check !seq[MyObj].fromJson(myObjsJson) == expected
+
+  test "deserializes Option[T] from string":
+    type MyObj = object
+      mystring: string
+      myint: int
+
+    let expected = some MyObj(mystring: "abc", myint: 1)
+    let myObjJson = """{
+            "mystring": "abc",
+            "myint": 1
+          }"""
+
+    check !(Option[MyObj].fromJson(myObjJson)) == expected
