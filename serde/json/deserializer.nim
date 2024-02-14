@@ -126,10 +126,11 @@ proc fromJson*[N: static[int], T: array[N, byte]](_: type T, json: JsonNode): ?!
 proc fromJson*[T: distinct](_: type T, json: JsonNode): ?!T =
   success T(?T.distinctBase.fromJson(json))
 
-proc fromJson*[N: static[int], T: StUint[N]](_: type T, json: JsonNode): ?!T =
+proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
   expectJsonKind(T, JString, json)
   let jsonStr = json.getStr
-  let prefix = jsonStr[0 .. 1].toLowerAscii
+  let prefix = if jsonStr.len >= 2: jsonStr[0 .. 1].toLowerAscii
+               else: jsonStr
   case prefix
   of "0x":
     catch parse(jsonStr, T, 16)
