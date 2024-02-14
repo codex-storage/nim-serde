@@ -19,9 +19,29 @@ suite "json serialization - deserialize":
     let json = newJString("Second")
     check !MyEnum.fromJson(json) == Second
 
+  test "deserializes UInt256 with no prefix":
+    let json = newJString("1")
+    check !UInt256.fromJson(json) == 1.u256
+
+  test "deserializes UInt256 from hex string representation":
+    let json = newJString("0x1")
+    check !UInt256.fromJson(json) == 0x1.u256
+
+  test "deserializes UInt256 from octal string representation":
+    let json = newJString("0o1")
+    check !UInt256.fromJson(json) == 0o1.u256
+
+  test "deserializes UInt256 from binary string representation":
+    let json = newJString("0b1")
+    check !UInt256.fromJson(json) == 0b1.u256
+
   test "deserializes UInt256 from non-hex string representation":
     let json = newJString("100000")
     check !UInt256.fromJson(json) == 100000.u256
+
+  test "deserializes Int256 with no prefix":
+    let json = newJString("1")
+    check !Int256.fromJson(json) == 1.i256
 
   test "deserializes Option[T] when has a value":
     let json = newJInt(1)
