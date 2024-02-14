@@ -240,3 +240,11 @@ proc fromJson*[T: ref object or object](_: type T, bytes: openArray[byte]): ?!T 
 proc fromJson*[T: ref object or object](_: type T, json: string): ?!T =
   let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   T.fromJson(jsn)
+
+proc fromJson*[T: ref object or object](_: type seq[T], json: string): ?!seq[T] =
+  let jsn = ?JsonNode.parse(json) # full qualification required in-module only
+  seq[T].fromJson(jsn)
+
+proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
+  let jsn = ?JsonNode.parse(json) # full qualification required in-module only
+  Option[T].fromJson(jsn)
