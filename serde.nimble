@@ -1,6 +1,6 @@
 # Package
 
-version       = "1.0.0"
+version       = "1.1.0"
 author        = "nim-serde authors"
 description   = "Easy-to-use serialization capabilities (currently json only), with a drop-in replacement for std/json."
 license       = "MIT"
