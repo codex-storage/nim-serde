@@ -7,6 +7,7 @@
 **Merged pull requests:**
 
 - deserialize non-prefixed stuint [\#10](https://github.com/codex-storage/nim-serde/pull/10) ([emizzle](https://github.com/emizzle))
+- deserialize seq\[T\] and Option\[T\] from string [\#9](https://github.com/codex-storage/nim-serde/pull/9) ([emizzle](https://github.com/emizzle))
 
 ## [v1.0.0](https://github.com/codex-storage/nim-serde/tree/v1.0.0) (2024-02-13)
 
