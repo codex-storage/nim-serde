@@ -102,13 +102,11 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     case mode
     of OptIn:
       if not hasSerialize:
-        debug "object field not marked with serialize, skipping"
         skip = true
       elif opts.ignore:
         skip = true
     of OptOut:
       if opts.ignore:
-        debug "object field opted out of serialization ('ignore' is set), skipping"
         skip = true
       elif hasSerialize and opts.key == name: # all serialize params are default
         warn "object field marked as serialize in OptOut mode, but 'ignore' not set, field will be serialized"
