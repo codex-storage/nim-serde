@@ -96,6 +96,7 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     let hasSerialize = value.hasCustomPragma(serialize)
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
+    # logScope moved into proc due to chronicles issue: https://github.com/status-im/nim-chronicles/issues/148
     logScope:
       topics = "serde json serialization"
 

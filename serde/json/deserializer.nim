@@ -185,6 +185,7 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
     let isOptionalValue = typeof(value) is Option
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
+    # logScope moved into proc due to chronicles issue: https://github.com/status-im/nim-chronicles/issues/148
     logScope:
       topics = "serde json deserialization"
 
