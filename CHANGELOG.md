@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- Fix log topics [\#14](https://github.com/codex-storage/nim-serde/pull/14) ([benbierens](https://github.com/benbierens))
 - run changelog workflow on release [\#12](https://github.com/codex-storage/nim-serde/pull/12) ([emizzle](https://github.com/emizzle))
 
 ## [v1.1.0](https://github.com/codex-storage/nim-serde/tree/v1.1.0) (2024-02-14)
