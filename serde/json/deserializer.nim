@@ -27,9 +27,6 @@ export types
 
 {.push raises: [].}
 
-logScope:
-  topics = "json deserialization"
-
 template expectJsonKind(
     expectedType: type, expectedKinds: set[JsonNodeKind], json: JsonNode
 ) =
@@ -187,6 +184,9 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
     let opts = getSerdeFieldOptions(deserialize, name, value)
     let isOptionalValue = typeof(value) is Option
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
+
+    logScope:
+      topics = "serde json deserialization"
 
     case mode
     of Strict:

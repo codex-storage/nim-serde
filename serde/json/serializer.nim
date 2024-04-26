@@ -20,9 +20,6 @@ export types
 
 {.push raises: [].}
 
-logScope:
-  topics = "json serialization"
-
 proc `%`*(s: string): JsonNode =
   newJString(s)
 
@@ -98,6 +95,9 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     let opts = getSerdeFieldOptions(serialize, name, value)
     let hasSerialize = value.hasCustomPragma(serialize)
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
+
+    logScope:
+      topics = "serde json serialization"
 
     case mode
     of OptIn:
