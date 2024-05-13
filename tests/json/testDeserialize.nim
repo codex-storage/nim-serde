@@ -189,14 +189,14 @@ suite "json serialization - deserialize":
     check deserialized.myint == expected.myint
 
 suite "deserialize from string":
-
   test "deserializes objects from string":
     type MyObj = object
       mystring: string
       myint: int
 
     let expected = MyObj(mystring: "abc", myint: 1)
-    let myObjJson = """{
+    let myObjJson =
+      """{
             "mystring": "abc",
             "myint": 1
           }"""
@@ -209,7 +209,8 @@ suite "deserialize from string":
       myint: int
 
     let expected = MyRef(mystring: "abc", myint: 1)
-    let myRefJson = """{
+    let myRefJson =
+      """{
             "mystring": "abc",
             "myint": 1
           }"""
@@ -224,7 +225,8 @@ suite "deserialize from string":
       myint: int
 
     let expected = @[MyObj(mystring: "abc", myint: 1)]
-    let myObjsJson = """[{
+    let myObjsJson =
+      """[{
             "mystring": "abc",
             "myint": 1
           }]"""
@@ -237,7 +239,8 @@ suite "deserialize from string":
       myint: int
 
     let expected = some MyObj(mystring: "abc", myint: 1)
-    let myObjJson = """{
+    let myObjJson =
+      """{
             "mystring": "abc",
             "myint": 1
           }"""

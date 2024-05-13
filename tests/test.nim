@@ -4,4 +4,4 @@ import ./json/testPragmas
 import ./json/testSerialize
 import ./json/testSerializeModes
 
-{.warning[UnusedImport]:off.}
+{.warning[UnusedImport]: off.}
