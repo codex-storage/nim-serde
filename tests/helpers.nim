@@ -1,5 +1,4 @@
 import std/strutils
 
 func flatten*(s: string): string =
-  s.replace(" ")
-    .replace("\n")
+  s.replace(" ").replace("\n")
