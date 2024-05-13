@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- add empty string test for UInt256 [\#15](https://github.com/codex-storage/nim-serde/pull/15) ([emizzle](https://github.com/emizzle))
 - Fix log topics [\#14](https://github.com/codex-storage/nim-serde/pull/14) ([benbierens](https://github.com/benbierens))
 - run changelog workflow on release [\#12](https://github.com/codex-storage/nim-serde/pull/12) ([emizzle](https://github.com/emizzle))
 
