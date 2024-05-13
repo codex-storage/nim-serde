@@ -19,6 +19,10 @@ suite "json serialization - deserialize":
     let json = newJString("Second")
     check !MyEnum.fromJson(json) == Second
 
+  test "deserializes UInt256 from an empty string":
+    let json = newJString("")
+    check !UInt256.fromJson(json) == 0.u256
+
   test "deserializes UInt256 with no prefix":
     let json = newJString("1")
     check !UInt256.fromJson(json) == 1.u256
