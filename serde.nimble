@@ -1,11 +1,11 @@
 # Package
 
-version       = "1.1.0"
-author        = "nim-serde authors"
-description   = "Easy-to-use serialization capabilities (currently json only), with a drop-in replacement for std/json."
-license       = "MIT"
-skipDirs      = @["tests"]
-
+version = "1.1.1"
+author = "nim-serde authors"
+description =
+  "Easy-to-use serialization capabilities (currently json only)."
+license = "MIT"
+skipDirs = @["tests"]
 
 # Dependencies
 requires "nim >= 1.6.14"
