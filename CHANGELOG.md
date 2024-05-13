@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- chore: v.1.1.1 [\#17](https://github.com/codex-storage/nim-serde/pull/17) ([emizzle](https://github.com/emizzle))
 - chore\[formatting\]: update formatting [\#16](https://github.com/codex-storage/nim-serde/pull/16) ([emizzle](https://github.com/emizzle))
 - add empty string test for UInt256 [\#15](https://github.com/codex-storage/nim-serde/pull/15) ([emizzle](https://github.com/emizzle))
 - Fix log topics [\#14](https://github.com/codex-storage/nim-serde/pull/14) ([benbierens](https://github.com/benbierens))
