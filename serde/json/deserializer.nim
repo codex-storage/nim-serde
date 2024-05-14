@@ -126,8 +126,11 @@ proc fromJson*[T: distinct](_: type T, json: JsonNode): ?!T =
 proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
   expectJsonKind(T, JString, json)
   let jsonStr = json.getStr
-  let prefix = if jsonStr.len >= 2: jsonStr[0 .. 1].toLowerAscii
-               else: jsonStr
+  let prefix =
+    if jsonStr.len >= 2:
+      jsonStr[0 .. 1].toLowerAscii
+    else:
+      jsonStr
   case prefix
   of "0x":
     catch parse(jsonStr, T, 16)
@@ -246,6 +249,12 @@ proc fromJson*[T: ref object or object](_: type seq[T], json: string): ?!seq[T] 
   let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   seq[T].fromJson(jsn)
 
+proc fromJson*(T: typedesc[StUint or StInt], json: string): ?!T =
+  T.fromJson(newJString(json))
+
 proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
-  let jsn = ?JsonNode.parse(json) # full qualification required in-module only
+  when T is (StUInt or StInt):
+    let jsn = newJString(json)
+  else:
+    let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   Option[T].fromJson(jsn)
