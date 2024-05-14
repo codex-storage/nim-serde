@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- fix: add missing test update [\#20](https://github.com/codex-storage/nim-serde/pull/20) ([emizzle](https://github.com/emizzle))
 - chore: reorganize deserialize tests [\#19](https://github.com/codex-storage/nim-serde/pull/19) ([emizzle](https://github.com/emizzle))
 - fix: UInt256 not correctly deserializing from string [\#18](https://github.com/codex-storage/nim-serde/pull/18) ([emizzle](https://github.com/emizzle))
 
