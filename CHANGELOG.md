@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- chore: reorganize deserialize tests [\#19](https://github.com/codex-storage/nim-serde/pull/19) ([emizzle](https://github.com/emizzle))
 - fix: UInt256 not correctly deserializing from string [\#18](https://github.com/codex-storage/nim-serde/pull/18) ([emizzle](https://github.com/emizzle))
 
 ## [v1.1.1](https://github.com/codex-storage/nim-serde/tree/v1.1.1) (2024-05-13)
