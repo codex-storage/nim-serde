@@ -1,9 +1,8 @@
 # Package
 
-version = "1.1.1"
+version = "1.2.0"
 author = "nim-serde authors"
-description =
-  "Easy-to-use serialization capabilities (currently json only)."
+description = "Easy-to-use serialization capabilities (currently json only)."
 license = "MIT"
 skipDirs = @["tests"]
 
