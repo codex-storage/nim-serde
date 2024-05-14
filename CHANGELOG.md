@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/codex-storage/nim-serde/tree/HEAD)
+
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.1.1...HEAD)
+
+**Merged pull requests:**
+
+- fix: UInt256 not correctly deserializing from string [\#18](https://github.com/codex-storage/nim-serde/pull/18) ([emizzle](https://github.com/emizzle))
+
 ## [v1.1.1](https://github.com/codex-storage/nim-serde/tree/v1.1.1) (2024-05-13)
 
 [Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.1.0...v1.1.1)
