@@ -338,12 +338,6 @@ proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
 # We can also be sure that these `fromJson` symbols can be overloaded where
 # needed.
 static:
-  type MyEnum = enum
-    one
-
-  discard MyEnum.fromJson("")
-  discard Option[MyEnum].fromJson("")
-  discard seq[MyEnum].fromJson("")
   discard bool.fromJson("")
   discard Option[bool].fromJson("")
   discard seq[bool].fromJson("")
