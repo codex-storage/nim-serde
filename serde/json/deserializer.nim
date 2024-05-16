@@ -16,6 +16,7 @@ import ./errors
 import ./stdjson
 import ./pragmas
 import ./types
+import ./helpers
 
 export parser
 export chronicles except toJson
@@ -124,25 +125,35 @@ proc fromJson*[T: distinct](_: type T, json: JsonNode): ?!T =
   success T(?T.distinctBase.fromJson(json))
 
 proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
-  expectJsonKind(T, JString, json)
-  let jsonStr = json.getStr
-  let prefix =
-    if jsonStr.len >= 2:
-      jsonStr[0 .. 1].toLowerAscii
+  expectJsonKind(T, {JString, JInt, JNull}, json)
+
+  case json.kind
+  of JNull: # return 0, optional values are handled up the call stack
+    return catch parse("0", T)
+  of JInt:
+    return catch parse($json, T)
+  else: # JString (only other kind allowed)
+    if json.isNullString:
+      return catch parse("0", T)
+
+    let jsonStr = json.getStr
+    let prefix =
+      if jsonStr.len >= 2:
+        jsonStr[0 .. 1].toLowerAscii
+      else:
+        jsonStr
+    case prefix
+    of "0x":
+      catch parse(jsonStr, T, 16)
+    of "0o":
+      catch parse(jsonStr, T, 8)
+    of "0b":
+      catch parse(jsonStr, T, 2)
     else:
-      jsonStr
-  case prefix
-  of "0x":
-    catch parse(jsonStr, T, 16)
-  of "0o":
-    catch parse(jsonStr, T, 8)
-  of "0b":
-    catch parse(jsonStr, T, 2)
-  else:
-    catch parse(jsonStr, T)
+      catch parse(jsonStr, T)
 
 proc fromJson*[T](_: type Option[T], json: JsonNode): ?!Option[T] =
-  if json.isNil or json.kind == JNull:
+  if json.isNil or json.kind == JNull or json.isEmptyString or json.isNullString:
     return success(none T)
   without val =? T.fromJson(json), error:
     return failure(error)

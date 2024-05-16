@@ -3,6 +3,7 @@ import pkg/serde
 import pkg/questionable
 import pkg/questionable/results
 import pkg/stew/byteutils
+import pkg/stint
 
 suite "json - deserialize objects":
   test "can deserialize json objects":
@@ -165,3 +166,44 @@ suite "json - deserialize objects from string":
           }"""
 
     check !(Option[MyObj].fromJson(myObjJson)) == expected
+
+  test "deserializes object with UInt256 from string":
+    type MyObj = object
+      mystring: string
+      myu256: UInt256
+
+    let expected = MyObj(mystring: "abc", myu256: 1.u256)
+    let myObjJson =
+      """{
+            "mystring": "abc",
+            "myu256": 1
+          }"""
+
+    check !MyObj.fromJson(myObjJson) == expected
+
+  test "deserializes object with stringified UInt256 from string":
+    type MyObj = object
+      mystring: string
+      myu256: UInt256
+
+    let expected = MyObj(mystring: "abc", myu256: 1.u256)
+    let myObjJson =
+      """{
+            "mystring": "abc",
+            "myu256": "1"
+          }"""
+
+    check !MyObj.fromJson(myObjJson) == expected
+
+  test "deserializes object with ?UInt256 from string":
+    type MyObj = object
+      mystring: string
+      myu256: ?UInt256
+
+    let expected = MyObj(mystring: "abc", myu256: UInt256.none)
+    let myObjJson =
+      """{
+            "mystring": "abc",
+          }"""
+
+    check !MyObj.fromJson(myObjJson) == expected
