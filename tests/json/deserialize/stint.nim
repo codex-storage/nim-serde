@@ -14,10 +14,15 @@ suite "json - deserialize stint":
     check !UInt256.fromJson("") == 0.u256
 
   test "deserializes UInt256 from null string":
-    check !UInt256.fromJson("null") == 0.u256
+    let res = UInt256.fromJson("null")
+    check res.error of SerdeError
+    check res.error.msg == "Cannot deserialize 'null' into type UInt256"
 
   test "deserializes UInt256 from JNull":
-    check !UInt256.fromJson(newJNull()) == 0.u256
+    let res = UInt256.fromJson(newJNull())
+    check res.error of UnexpectedKindError
+    check res.error.msg ==
+      "deserialization to UInt256 failed: expected {JInt, JString} but got JNull"
 
   test "deserializes ?UInt256 from an empty JString":
     let json = newJString("")
@@ -39,10 +44,15 @@ suite "json - deserialize stint":
     check seq[UInt256].fromJson("[1,2,\"\"]") == success @[1.u256, 2.u256, 0.u256]
 
   test "deserializes seq[UInt256] from string with null item":
-    check seq[UInt256].fromJson("[1,2,null]") == success @[1.u256, 2.u256, 0.u256]
+    let res = seq[UInt256].fromJson("[1,2,null]")
+    check res.error of UnexpectedKindError
+    check res.error.msg ==
+      "deserialization to UInt256 failed: expected {JInt, JString} but got JNull"
 
   test "deserializes seq[UInt256] from string with null string item":
-    check seq[UInt256].fromJson("[1,2,\"null\"]") == success @[1.u256, 2.u256, 0.u256]
+    let res = seq[UInt256].fromJson("[1,2,\"null\"]")
+    check res.error of SerdeError
+    check res.error.msg == "Cannot deserialize 'null' into type UInt256"
 
   test "deserializes seq[?UInt256] from string":
     check seq[?UInt256].fromJson("[1,2,3]") ==
