@@ -79,6 +79,12 @@ proc fromJson*[T: SomeInteger](_: type T, json: JsonNode): ?!T =
     expectJsonKind(T, {JInt, JString}, json)
     case json.kind
     of JString:
+      if json.isNullString:
+        let err = newSerdeError("Cannot deserialize 'null' into type " & $T)
+        return failure(err)
+      elif json.isEmptyString:
+        return success T(0)
+
       without x =? parseBiggestUInt(json.str).catch, error:
         return failure newSerdeError(error.msg)
       return success cast[T](x)
@@ -125,16 +131,15 @@ proc fromJson*[T: distinct](_: type T, json: JsonNode): ?!T =
   success T(?T.distinctBase.fromJson(json))
 
 proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
-  expectJsonKind(T, {JString, JInt, JNull}, json)
+  expectJsonKind(T, {JString, JInt}, json)
 
   case json.kind
-  of JNull: # return 0, optional values are handled up the call stack
-    return catch parse("0", T)
   of JInt:
     return catch parse($json, T)
   else: # JString (only other kind allowed)
     if json.isNullString:
-      return catch parse("0", T)
+      let err = newSerdeError("Cannot deserialize 'null' into type " & $T)
+      return failure(err)
 
     let jsonStr = json.getStr
     let prefix =
@@ -253,8 +258,61 @@ proc fromJson*[T: ref object or object](_: type T, bytes: openArray[byte]): ?!T 
   T.fromJson(json)
 
 proc fromJson*[T: ref object or object](_: type T, json: string): ?!T =
+  echo "here1, T: ", T
+  when T is Option:
+    echo " we have an option!"
   let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   T.fromJson(jsn)
+
+proc fromJson*[T: enum](_: type T, json: string): ?!T =
+  T.fromJson(newJString(json))
+
+proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool](
+    _: type T, json: string
+): ?!T =
+  if json == "" or json == "null":
+    let err = newSerdeError("Cannot deserialize '' or 'null' into type " & $T)
+    failure err
+  else:
+    let jsn = ?JsonNode.parse(json)
+    T.fromJson(jsn)
+
+proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool or enum](
+    _: type Option[T], json: string
+): ?!Option[T] =
+  if json == "" or json == "null":
+    success T.none
+  else:
+    when T is enum:
+      let jsn = newJString(json)
+    else:
+      let jsn = ?JsonNode.parse(json)
+    Option[T].fromJson(jsn)
+
+proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool or enum](
+    _: type seq[T], json: string
+): ?!seq[T] =
+  if json == "" or json == "null":
+    success newSeq[T]()
+  else:
+    if T is enum:
+      let err = newSerdeError("Cannot deserialize a seq[enum]: not yet implemented, PRs welcome")
+      return failure err
+
+    let jsn = ?JsonNode.parse(json)
+    seq[T].fromJson(jsn)
+
+proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool or enum](
+    _: type ?seq[T], json: string
+): ?!Option[seq[T]] =
+  if json == "" or json == "null":
+    success seq[T].none
+  else:
+    if T is enum:
+      let err = newSerdeError("Cannot deserialize a seq[enum]: not yet implemented, PRs welcome")
+      return failure err
+    let jsn = ?JsonNode.parse(json)
+    Option[seq[T]].fromJson(jsn)
 
 proc fromJson*[T: ref object or object](_: type seq[T], json: string): ?!seq[T] =
   let jsn = ?JsonNode.parse(json) # full qualification required in-module only
