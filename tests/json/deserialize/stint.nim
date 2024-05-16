@@ -13,12 +13,52 @@ suite "json - deserialize stint":
   test "deserializes UInt256 from an empty string":
     check !UInt256.fromJson("") == 0.u256
 
+  test "deserializes UInt256 from null string":
+    check !UInt256.fromJson("null") == 0.u256
+
+  test "deserializes UInt256 from JNull":
+    check !UInt256.fromJson(newJNull()) == 0.u256
+
   test "deserializes ?UInt256 from an empty JString":
     let json = newJString("")
-    check !Option[UInt256].fromJson(json) == 0.u256.some
+    check !Option[UInt256].fromJson(json) == UInt256.none
 
   test "deserializes ?UInt256 from an empty string":
-    check !Option[UInt256].fromJson("") == 0.u256.some
+    check !Option[UInt256].fromJson("") == UInt256.none
+
+  test "deserializes ?UInt256 from null string":
+    check !Option[UInt256].fromJson("null") == UInt256.none
+
+  test "deserializes ?UInt256 from JNull":
+    check !Option[UInt256].fromJson(newJNull()) == UInt256.none
+
+  test "deserializes seq[UInt256] from string":
+    check seq[UInt256].fromJson("[1,2,3]") == success @[1.u256, 2.u256, 3.u256]
+
+  test "deserializes seq[UInt256] from string with empty string item":
+    check seq[UInt256].fromJson("[1,2,\"\"]") == success @[1.u256, 2.u256, 0.u256]
+
+  test "deserializes seq[UInt256] from string with null item":
+    check seq[UInt256].fromJson("[1,2,null]") == success @[1.u256, 2.u256, 0.u256]
+
+  test "deserializes seq[UInt256] from string with null string item":
+    check seq[UInt256].fromJson("[1,2,\"null\"]") == success @[1.u256, 2.u256, 0.u256]
+
+  test "deserializes seq[?UInt256] from string":
+    check seq[?UInt256].fromJson("[1,2,3]") ==
+      success @[1.u256.some, 2.u256.some, 3.u256.some]
+
+  test "deserializes seq[?UInt256] from string with empty string item":
+    check seq[?UInt256].fromJson("[1,2,\"\"]") ==
+      success @[1.u256.some, 2.u256.some, UInt256.none]
+
+  test "deserializes seq[?UInt256] from string with null item":
+    check seq[?UInt256].fromJson("[1,2,null]") ==
+      success @[1.u256.some, 2.u256.some, UInt256.none]
+
+  test "deserializes seq[?UInt256] from string with null string item":
+    check seq[?UInt256].fromJson("[1,2,\"null\"]") ==
+      success @[1.u256.some, 2.u256.some, UInt256.none]
 
   test "deserializes UInt256 from JString with no prefix":
     let json = newJString("1")
