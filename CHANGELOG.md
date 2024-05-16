@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- feat: improve deserialization from string [\#23](https://github.com/codex-storage/nim-serde/pull/23) ([emizzle](https://github.com/emizzle))
 - feat: improve stint parsing [\#22](https://github.com/codex-storage/nim-serde/pull/22) ([emizzle](https://github.com/emizzle))
 
 ## [v1.2.0](https://github.com/codex-storage/nim-serde/tree/v1.2.0) (2024-05-14)
