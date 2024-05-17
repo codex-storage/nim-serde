@@ -388,3 +388,25 @@ proc parseMe(me: string): JsonNode {.raises: [MyAppError].} =
 
 assert """{"hello":"world"}""".parseMe == %* { "hello": "world" }
 ```
+
+## Known issues
+
+There is a known issue when using mixins with generic overloaded procs like
+`fromJson`. At the time of mixin call, only the `fromJson` overloads in scope of
+the called mixin are available to be dispatched at runtime. There could be other
+`fromJson` overloads declared in other modules, but are not in scope at the time
+the mixin was called. Therefore, anytime `fromJson` is called targeting a
+declared overload, it may or may not be dispatchable. This can be worked around
+by forcing the `fromJson` overload into scope at compile time. For example, in
+your application where the `fromJson` overload is defined, at the bottom of the
+module add:
+```nim
+static: MyType.fromJson("")
+```
+This will ensure that the `MyType.fromJson` overload is dispatchable.
+
+The basic types that serde supports should already have their overloads forced
+in scope in [the `deserializer`
+module]("./serde/json/deserializer.nim#L340-L356").
+
+For an illustration of the problem, please see this [narrow example](https://github.com/gmega/serialization-bug/tree/main/narrow) by [@gmega](https://github.com/gmega).
