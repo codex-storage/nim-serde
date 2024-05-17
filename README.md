@@ -407,6 +407,6 @@ This will ensure that the `MyType.fromJson` overload is dispatchable.
 
 The basic types that serde supports should already have their overloads forced
 in scope in [the `deserializer`
-module]("./serde/json/deserializer.nim#L340-L356").
+module](./serde/json/deserializer.nim#L340-L356).
 
 For an illustration of the problem, please see this [narrow example](https://github.com/gmega/serialization-bug/tree/main/narrow) by [@gmega](https://github.com/gmega).
