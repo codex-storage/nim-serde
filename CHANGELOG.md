@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/codex-storage/nim-serde/tree/HEAD)
+## [v1.2.1](https://github.com/codex-storage/nim-serde/tree/v1.2.1) (2024-05-21)
 
-[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.0...HEAD)
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.0...v1.2.1)
 
 **Merged pull requests:**
 
