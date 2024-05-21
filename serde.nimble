@@ -1,6 +1,6 @@
 # Package
 
-version = "1.2.0"
+version = "1.2.1"
 author = "nim-serde authors"
 description = "Easy-to-use serialization capabilities (currently json only)."
 license = "MIT"
