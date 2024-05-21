@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- fix: force symbol resolution for types that serde de/serializes  [\#24](https://github.com/codex-storage/nim-serde/pull/24) ([emizzle](https://github.com/emizzle))
 - feat: improve deserialization from string [\#23](https://github.com/codex-storage/nim-serde/pull/23) ([emizzle](https://github.com/emizzle))
 - feat: improve stint parsing [\#22](https://github.com/codex-storage/nim-serde/pull/22) ([emizzle](https://github.com/emizzle))
 
