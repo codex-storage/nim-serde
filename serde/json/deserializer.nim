@@ -327,3 +327,30 @@ proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
   else:
     let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   Option[T].fromJson(jsn)
+
+# Force symbols into scope when mixins are used with generic overloads. When
+# mixins are used with generic overloads, the overloaded symbols in scope of the
+# mixin are evaluated from the perspective of the mixin. This creates issues in
+# downstream modules that may inadvertantly dispatch *only* to the symbols in
+# the scope of the mixin, even when the module with the wrong symbol overloads
+# is not imported. By forcing the compiler to use symbols for types handled by
+# serde, we can be sure that these symbols are available to downstream modules.
+# We can also be sure that these `fromJson` symbols can be overloaded where
+# needed.
+static:
+  discard bool.fromJson("")
+  discard Option[bool].fromJson("")
+  discard seq[bool].fromJson("")
+  discard uint.fromJson("")
+  discard Option[uint].fromJson("")
+  discard seq[uint].fromJson("")
+  discard int.fromJson("")
+  discard Option[int].fromJson("")
+  discard seq[int].fromJson("")
+  discard UInt256.fromJson("")
+  discard Option[UInt256].fromJson("")
+  discard seq[UInt256].fromJson("")
+  discard JsonNode.fromJson("")
+  type DistinctType = distinct int
+  discard DistinctType.fromJson(newJString(""))
+  discard UInt256.fromJson(newSeq[byte](0))
