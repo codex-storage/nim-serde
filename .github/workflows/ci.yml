@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nim: [1.6.16, stable]
+        nim: [1.6.20, stable]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install Nim
-      uses: iffy/install-nim@v4
-      with:
-        version: ${{ matrix.nim }}
-    - name: Build
-      run: nimble install -y
+      - name: Install Nim
+        uses: iffy/install-nim@v4
+        with:
+          version: ${{ matrix.nim }}
+      - name: Build
+        run: nimble install -y
 
-    - name: Test
-      run: nimble test -y
+      - name: Test
+        run: nimble test -y
