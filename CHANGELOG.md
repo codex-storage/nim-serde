@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/codex-storage/nim-serde/tree/HEAD)
+
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.1...HEAD)
+
+**Merged pull requests:**
+
+- chore: remove unneeded echos [\#26](https://github.com/codex-storage/nim-serde/pull/26) ([emizzle](https://github.com/emizzle))
+
 ## [v1.2.1](https://github.com/codex-storage/nim-serde/tree/v1.2.1) (2024-05-21)
 
 [Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.0...v1.2.1)
