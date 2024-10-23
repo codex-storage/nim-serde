@@ -258,9 +258,6 @@ proc fromJson*[T: ref object or object](_: type T, bytes: openArray[byte]): ?!T 
   T.fromJson(json)
 
 proc fromJson*[T: ref object or object](_: type T, json: string): ?!T =
-  echo "here1, T: ", T
-  when T is Option:
-    echo " we have an option!"
   let jsn = ?JsonNode.parse(json) # full qualification required in-module only
   T.fromJson(jsn)
 
