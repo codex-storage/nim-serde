@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- v1.2.2 [\#28](https://github.com/codex-storage/nim-serde/pull/28) ([emizzle](https://github.com/emizzle))
 - chore: bumps nim from 1.6.16 to 1.6.20 in ci [\#27](https://github.com/codex-storage/nim-serde/pull/27) ([emizzle](https://github.com/emizzle))
 - chore: remove unneeded echos [\#26](https://github.com/codex-storage/nim-serde/pull/26) ([emizzle](https://github.com/emizzle))
 
