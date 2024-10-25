@@ -1,8 +1,16 @@
 # Changelog
 
-## [v1.2.3](https://github.com/codex-storage/nim-serde/tree/v1.2.3) (2024-10-23)
+## [Unreleased](https://github.com/codex-storage/nim-serde/tree/HEAD)
 
-[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.1...v1.2.3)
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v.1.2.2...HEAD)
+
+**Merged pull requests:**
+
+- ci: add matrix status job [\#29](https://github.com/codex-storage/nim-serde/pull/29) ([veaceslavdoina](https://github.com/veaceslavdoina))
+
+## [v.1.2.2](https://github.com/codex-storage/nim-serde/tree/v.1.2.2) (2024-10-23)
+
+[Full Changelog](https://github.com/codex-storage/nim-serde/compare/v1.2.1...v.1.2.2)
 
 **Merged pull requests:**
 
