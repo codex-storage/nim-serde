@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- fix loglevel and add log scope to allow filtering and avoid log pollution [\#30](https://github.com/codex-storage/nim-serde/pull/30) ([dryajov](https://github.com/dryajov))
 - ci: add matrix status job [\#29](https://github.com/codex-storage/nim-serde/pull/29) ([veaceslavdoina](https://github.com/veaceslavdoina))
 
 ## [v.1.2.2](https://github.com/codex-storage/nim-serde/tree/v.1.2.2) (2024-10-23)
