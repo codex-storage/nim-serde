@@ -28,6 +28,9 @@ export types
 
 {.push raises: [].}
 
+logScope:
+  topics = "nimserde json deserializer"
+
 template expectJsonKind(
     expectedType: type, expectedKinds: set[JsonNodeKind], json: JsonNode
 ) =
@@ -217,16 +220,16 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
         warn "object field marked as 'ignore' while in Strict mode, field will be deserialized anyway"
     of OptIn:
       if not hasDeserializePragma:
-        debug "object field not marked as 'deserialize', skipping"
+        trace "object field not marked as 'deserialize', skipping"
         skip = true
       elif opts.ignore:
-        debug "object field marked as 'ignore', skipping"
+        trace "object field marked as 'ignore', skipping"
         skip = true
       elif opts.key notin json and not isOptionalValue:
         return failure newSerdeError("object field missing in json: " & opts.key)
     of OptOut:
       if opts.ignore:
-        debug "object field is opted out of deserialization ('ignore' is set), skipping"
+        trace "object field is opted out of deserialization ('ignore' is set), skipping"
         skip = true
       elif hasDeserializePragma and opts.key == name:
         warn "object field marked as deserialize in OptOut mode, but 'ignore' not set, field will be deserialized"
@@ -235,7 +238,7 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
       if isOptionalValue:
         let jsonVal = json{opts.key}
         without parsed =? typeof(value).fromJson(jsonVal), e:
-          debug "failed to deserialize field",
+          trace "failed to deserialize field",
             `type` = $typeof(value), json = jsonVal, error = e.msg
           return failure(e)
         value = parsed
@@ -243,7 +246,7 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
       # not Option[T]
       elif opts.key in json and jsonVal =? json{opts.key}.catch and not jsonVal.isNil:
         without parsed =? typeof(value).fromJson(jsonVal), e:
-          debug "failed to deserialize field",
+          trace "failed to deserialize field",
             `type` = $typeof(value), json = jsonVal, error = e.msg
           return failure(e)
         value = parsed
