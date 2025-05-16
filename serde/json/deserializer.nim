@@ -12,10 +12,10 @@ import pkg/questionable
 import pkg/questionable/results
 
 import ./parser
-import ./errors
-import ./stdjson
-import ./pragmas
-import ./types
+import ../utils/errors
+import ../utils/stdjson
+import ../utils/pragmas
+import ../utils/types
 import ./helpers
 
 export parser

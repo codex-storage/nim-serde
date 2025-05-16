@@ -9,9 +9,9 @@ import pkg/questionable
 import pkg/stew/byteutils
 import pkg/stint
 
-import ./stdjson
-import ./pragmas
-import ./types
+import ../utils/stdjson
+import ../utils/pragmas
+import ../utils/types
 
 export chronicles except toJson
 export stdjson

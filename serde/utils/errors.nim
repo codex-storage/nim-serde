@@ -13,6 +13,8 @@ proc mapErrTo*[E1: ref CatchableError, E2: SerdeError](
 proc newSerdeError*(msg: string): ref SerdeError =
   newException(SerdeError, msg)
 
+# proc newUnexpectedKindError*
+
 proc newUnexpectedKindError*(
     expectedType: type, expectedKinds: string, json: JsonNode
 ): ref UnexpectedKindError =
