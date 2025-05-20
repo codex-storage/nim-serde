@@ -580,86 +580,7 @@ func getFloat*(n: CborNode; default = 0.0): float =
     default
 
 
-proc fromCbor*[T](v: var T; n: CborNode): bool =
-  ## Return `true` if `v` can be converted from a given `CborNode`.
-  ## Can be extended and overriden with `fromCborHook(v: var T; n: CborNode)`
-  ## for specific types of `T`.
-  when T is CborNode:
-    v = n
-    result = true
-  elif compiles(fromCborHook(v, n)):
-    result = fromCborHook(v, n)
-  elif T is distinct:
-    result = fromCbor(distinctBase v, n)
-  elif T is SomeUnsignedInt:
-    if n.kind == cborUnsigned:
-      v = T n.uint
-      result = v.BiggestUInt == n.uint
-  elif T is SomeSignedInt:
-    if n.kind == cborUnsigned:
-      v = T n.uint
-      result = v.BiggestUInt == n.uint
-    elif n.kind == cborNegative:
-      v = T n.int
-      result = v.BiggestInt == n.int
-  elif T is bool:
-    if n.isBool:
-      v = n.getBool
-      result = true
-  elif T is SomeFloat:
-    if n.kind == cborFloat:
-      v = T n.float
-      result = true
-  elif T is seq[byte]:
-    if n.kind == cborBytes:
-      v = n.bytes
-      result = true
-  elif T is string:
-    if n.kind == cborText:
-      v = n.text
-      result = true
-  elif T is seq:
-    if n.kind == cborArray:
-      result = true
-      v.setLen n.seq.len
-      for i, e in n.seq:
-        result = result and fromCbor(v[i], e)
-        if not result:
-          v.setLen 0
-          break
-  elif T is tuple:
-    if n.kind == cborArray and n.seq.len == T.tupleLen:
-      result = true
-      var i: int
-      for f in fields(v):
-        result = result and fromCbor(f, n.seq[i])
-        if not result: break
-        inc i
-  elif T is ref:
-    if n.isNull:
-      v = nil
-      result = true
-    else:
-      if isNil(v): new(v)
-      result = fromCbor(v[], n)
-  elif T is object:
-    if n.kind == cborMap:
-      result = true
-      var
-        i: int
-        key = CborNode(kind: cborText)
-      for s, _ in fieldPairs(v):
-        key.text = s
-        if not n.map.hasKey key:
-          result = false
-          break
-        else:
-          result = fromCbor(v.dot(s), n.map[key])
-          if not result: break
-          inc i
-      result = result and (i == n.map.len)
-
-proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
+proc fromCbor*[T](v: var T; n: CborNode): ?!void =
   ## Return a Result containing the value if `v` can be converted from a given `CborNode`,
   ## or an error if conversion fails.
   ## Can be extended and overriden with `fromCborHook(v: var T; n: CborNode)`
@@ -671,7 +592,7 @@ proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
     elif compiles(fromCborHook(v, n)):
       return fromCborHook(v, n)
     elif T is distinct:
-      return fromCborQ2(distinctBase v, n)
+      return fromCbor(distinctBase v, n)
     elif T is SomeUnsignedInt:
       exceptCborKind(T, {cborUnsigned}, n)
       v = T n.uint
@@ -714,7 +635,7 @@ proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
       exceptCborKind(T, {cborArray}, n)
       v.setLen n.seq.len
       for i, e in n.seq:
-        let itemResult = fromCborQ2(v[i], e)
+        let itemResult = fromCbor(v[i], e)
         if itemResult.isFailure:
           v.setLen 0
           return failure(itemResult.error)
@@ -725,7 +646,7 @@ proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
         return failure(newCborError("Expected tuple of length " & $T.tupleLen))
       var i: int
       for f in fields(v):
-        let itemResult = fromCborQ2(f, n.seq[i])
+        let itemResult = fromCbor(f, n.seq[i])
         if itemResult.isFailure:
           return failure(itemResult.error)
         inc i
@@ -736,7 +657,7 @@ proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
         return success()
       else:
         if isNil(v): new(v)
-        return fromCborQ2(v[], n)
+        return fromCbor(v[], n)
     elif T is object:
       exceptCborKind(T, {cborMap}, n)
       var
@@ -747,7 +668,7 @@ proc fromCborQ2*[T](v: var T; n: CborNode): ?!void =
         if not n.map.hasKey key:
           return failure(newCborError("Missing field: " & s))
         else:
-          let fieldResult = fromCborQ2(v.dot(s), n.map[key])
+          let fieldResult = fromCbor(v.dot(s), n.map[key])
           if fieldResult.isFailure:
             return failure(fieldResult.error)
           inc i

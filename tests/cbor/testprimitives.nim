@@ -98,3 +98,11 @@ test "sorting":
   check not map.isSorted
   sort(map)
   check map.isSorted
+
+test "invalid wire type":
+  var intValue: int
+  let node = CborNode(kind: cborText, text: "not an int")
+  let result = fromCbor(intValue, node)
+
+  check result.isFailure
+  check $result.error.msg == "deserialization to int failed: expected {cborUnsigned, cborNegative} but got cborText"
