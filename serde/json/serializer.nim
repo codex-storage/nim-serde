@@ -9,7 +9,7 @@ import pkg/questionable
 import pkg/stew/byteutils
 import pkg/stint
 
-import ../utils/stdjson
+import ./stdjson
 import ../utils/pragmas
 import ../utils/types
 
@@ -17,8 +17,6 @@ export chronicles except toJson
 export stdjson
 export pragmas
 export types
-
-{.push raises: [].}
 
 logScope:
   topics = "nimserde json serializer"

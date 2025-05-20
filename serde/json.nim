@@ -1,6 +1,6 @@
 import ./json/parser
 import ./json/deserializer
-import ./utils/stdjson
+import ./json/stdjson
 import ./utils/pragmas
 import ./json/serializer
 import ./utils/types

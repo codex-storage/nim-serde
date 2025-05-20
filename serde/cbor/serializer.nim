@@ -1,12 +1,42 @@
 {.push checks: off.}
 
-import ../utils/cbor
+import std/[streams, options, tables, typetraits, math, endians, times, base64]
+import ./types
+
+func isHalfPrecise(single: float32): bool =
+  # TODO: check for subnormal false-positives
+  let val = cast[uint32](single)
+  if val == 0 or val == (1'u32 shl 31):
+    result = true
+  else:
+    let
+      exp = int32((val and (0xff'u32 shl 23)) shr 23) - 127
+      mant = val and 0x7fffff'u32
+    if -25 < exp and exp < 16 and (mant and 0x1fff) == 0:
+      result = true
+
+func floatHalf(single: float32): uint16 =
+  ## Convert a 32-bit float to 16-bits.
+  let
+    val = cast[uint32](single)
+    exp = val and 0x7f800000
+    mant = val and 0x7fffff
+    sign = uint16(val shr 16) and (1 shl 15)
+  let
+    unbiasedExp = int32(exp shr 23) - 127
+    halfExp = unbiasedExp + 15
+  if halfExp < 1:
+    if 14 - halfExp < 25:
+      result = sign or uint16((mant or 0x800000) shr uint16(14 - halfExp))
+  else:
+    result = sign or uint16(halfExp shl 10) or uint16(mant shr 13)
 
 func initialByte(major, minor: Natural): uint8 {.inline.} =
   uint8((major shl 5) or (minor and 0b11111))
 
 proc writeInitial[T: SomeInteger](str: Stream; m: uint8; n: T) =
   ## Write the initial integer of a CBOR item.
+
   let m = m shl 5
   when T is byte:
     if n < 24:
@@ -36,7 +66,7 @@ proc writeInitial[T: SomeInteger](str: Stream; m: uint8; n: T) =
         {.unroll.}
         str.write((uint8)n shr i)
       str.write((uint8)n)
-{.pop.}
+# {.pop.}
 
 proc writeCborArrayLen*(str: Stream; len: Natural) =
   ## Write a marker to the stream that initiates an array of ``len`` items.
@@ -70,6 +100,8 @@ proc writeCbor*(str: Stream; buf: pointer; len: int) =
   ## Write a raw buffer to a CBOR `Stream`.
   str.writeInitial(BytesMajor, len)
   if len > 0: str.writeData(buf, len)
+
+proc isSorted*(n: CborNode): bool {.gcsafe.}
 
 proc writeCbor*[T](str: Stream; v: T) =
   ## Write the CBOR binary representation of a `T` to a `Stream`.
@@ -219,3 +251,119 @@ proc encode*[T](v: T): string =
   let s = newStringStream()
   s.writeCbor(v)
   s.data
+
+proc toRaw*(n: CborNode): CborNode =
+  ## Reduce a CborNode to a string of bytes.
+  if n.kind == cborRaw: n
+  else: CborNode(kind: cborRaw, raw: encode(n))
+
+proc isSorted(n: CborNode): bool =
+  ## Check if the item is sorted correctly.
+  var lastRaw = ""
+  for key in n.map.keys:
+    let thisRaw = key.toRaw.raw
+    if lastRaw != "":
+      if cmp(lastRaw, thisRaw) > 0: return false
+    lastRaw = thisRaw
+  true
+
+proc sort*(n: var CborNode) =
+  ## Sort a CBOR map object.
+  var tmp = initOrderedTable[CborNode, CborNode](n.map.len.nextPowerOfTwo)
+  for key, val in n.map.mpairs:
+    tmp[key.toRaw] = move(val)
+  sort(tmp) do (x, y: tuple[k: CborNode; v: CborNode]) -> int:
+    result = cmp(x.k.raw, y.k.raw)
+  n.map = move tmp
+
+proc writeCborHook*(str: Stream; dt: DateTime) =
+  ## Write a `DateTime` using the tagged string representation
+  ## defined in RCF7049 section 2.4.1.
+  writeCborTag(str, 0)
+  writeCbor(str, format(dt, timeFormat))
+
+proc writeCborHook*(str: Stream; t: Time) =
+  ## Write a `Time` using the tagged numerical representation
+  ## defined in RCF7049 section 2.4.1.
+  writeCborTag(str, 1)
+  writeCbor(str, t.toUnix)
+
+func toCbor*(x: CborNode): CborNode = x
+
+func toCbor*(x: SomeInteger): CborNode =
+  if x > 0:
+    CborNode(kind: cborUnsigned, uint: x.uint64)
+  else:
+    CborNode(kind: cborNegative, int: x.int64)
+
+func toCbor*(x: openArray[byte]): CborNode =
+  CborNode(kind: cborBytes, bytes: @x)
+
+func toCbor*(x: string): CborNode =
+  CborNode(kind: cborText, text: x)
+
+func toCbor*(x: openArray[CborNode]): CborNode =
+  CborNode(kind: cborArray, seq: @x)
+
+func toCbor*(pairs: openArray[(CborNode, CborNode)]): CborNode =
+  CborNode(kind: cborMap, map: pairs.toOrderedTable)
+
+func toCbor*(tag: uint64; val: CborNode): CborNode =
+  result = toCbor(val)
+  result.tag = some(tag)
+
+func toCbor*(x: bool): CborNode =
+  case x
+  of false:
+    CborNode(kind: cborSimple, simple: 20)
+  of true:
+    CborNode(kind: cborSimple, simple: 21)
+
+func toCbor*(x: SomeFloat): CborNode =
+  CborNode(kind: cborFloat, float: x.float64)
+
+func toCbor*(x: pointer): CborNode =
+  ## A hack to produce a CBOR null item.
+  assert(x.isNil)
+  CborNode(kind: cborSimple, simple: 22)
+
+func initCborBytes*[T: char|byte](buf: openArray[T]): CborNode =
+  ## Create a CBOR byte string from `buf`.
+  result = CborNode(kind: cborBytes, bytes: newSeq[byte](buf.len))
+  for i in 0..<buf.len:
+    result.bytes[i] = (byte)buf[i]
+
+func initCborBytes*(len: int): CborNode =
+  ## Create a CBOR byte string of ``len`` bytes.
+  CborNode(kind: cborBytes, bytes: newSeq[byte](len))
+
+func initCborText*(s: string): CborNode =
+  ## Create a CBOR text string from ``s``.
+  ## CBOR text must be unicode.
+  CborNode(kind: cborText, text: s)
+
+func initCborArray*(): CborNode =
+  ## Create an empty CBOR array.
+  CborNode(kind: cborArray, seq: newSeq[CborNode]())
+
+func initCborArray*(len: Natural): CborNode =
+  ## Initialize a CBOR arrary.
+  CborNode(kind: cborArray, seq: newSeq[CborNode](len))
+
+func initCborMap*(initialSize = tables.defaultInitialSize): CborNode =
+  ## Initialize a CBOR map.
+  CborNode(kind: cborMap,
+      map: initOrderedTable[CborNode, CborNode](initialSize))
+
+func initCbor*(items: varargs[CborNode, toCbor]): CborNode =
+  ## Initialize a CBOR arrary.
+  CborNode(kind: cborArray, seq: @items)
+
+template initCborOther*(x: untyped): CborNode =
+  ## Initialize a ``CborNode`` from a type where ``toCbor`` is not implemented.
+  ## This encodes ``x`` to binary using ``writeCbor``, so
+  ## ``$(initCborOther(x))`` will incur an encode and decode roundtrip.
+  let s = newStringStream()
+  s.writeCbor(x)
+  CborNode(kind: cborRaw, raw: s.data)
+

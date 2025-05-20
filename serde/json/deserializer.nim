@@ -12,10 +12,11 @@ import pkg/questionable
 import pkg/questionable/results
 
 import ./parser
-import ../utils/errors
-import ../utils/stdjson
+import ./errors
+import ./stdjson
 import ../utils/pragmas
 import ../utils/types
+import ../utils/errors
 import ./helpers
 
 export parser
@@ -31,28 +32,6 @@ export types
 logScope:
   topics = "nimserde json deserializer"
 
-template expectJsonKind(
-    expectedType: type, expectedKinds: set[JsonNodeKind], json: JsonNode
-) =
-  if json.isNil or json.kind notin expectedKinds:
-    return failure(newUnexpectedKindError(expectedType, expectedKinds, json))
-
-template expectJsonKind*(expectedType: type, expectedKind: JsonNodeKind, json: JsonNode) =
-  expectJsonKind(expectedType, {expectedKind}, json)
-
-proc fieldKeys[T](obj: T): seq[string] =
-  for name, _ in fieldPairs(
-    when type(T) is ref:
-      obj[]
-    else:
-      obj
-  ):
-    result.add name
-
-func keysNotIn[T](json: JsonNode, obj: T): HashSet[string] =
-  let jsonKeys = json.keys.toSeq.toHashSet
-  let objKeys = obj.fieldKeys.toHashSet
-  difference(jsonKeys, objKeys)
 
 proc fromJson*(T: type enum, json: JsonNode): ?!T =
   expectJsonKind(string, JString, json)
@@ -126,7 +105,8 @@ proc fromJson*(_: type seq[byte], json: JsonNode): ?!seq[byte] =
   expectJsonKind(seq[byte], JString, json)
   hexToSeqByte(json.getStr).catch
 
-proc fromJson*[N: static[int], T: array[N, byte]](_: type T, json: JsonNode): ?!T =
+proc fromJson*[N: static[int], T: array[N, byte]](_: type T,
+    json: JsonNode): ?!T =
   expectJsonKind(T, JString, json)
   T.fromHex(json.getStr).catch
 
@@ -161,7 +141,8 @@ proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
       catch parse(jsonStr, T)
 
 proc fromJson*[T](_: type Option[T], json: JsonNode): ?!Option[T] =
-  if json.isNil or json.kind == JNull or json.isEmptyString or json.isNullString:
+  if json.isNil or json.kind == JNull or json.isEmptyString or
+      json.isNullString:
     return success(none T)
   without val =? T.fromJson(json), error:
     return failure(error)
@@ -244,7 +225,8 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
         value = parsed
 
       # not Option[T]
-      elif opts.key in json and jsonVal =? json{opts.key}.catch and not jsonVal.isNil:
+      elif opts.key in json and jsonVal =? json{opts.key}.catch and
+          not jsonVal.isNil:
         without parsed =? typeof(value).fromJson(jsonVal), e:
           trace "failed to deserialize field",
             `type` = $typeof(value), json = jsonVal, error = e.msg
@@ -322,7 +304,7 @@ proc fromJson*(T: typedesc[StUint or StInt], json: string): ?!T =
   T.fromJson(newJString(json))
 
 proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
-  when T is (StUInt or StInt):
+  when T is (StUint or StInt):
     let jsn = newJString(json)
   else:
     let jsn = ?JsonNode.parse(json) # full qualification required in-module only
