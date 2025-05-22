@@ -88,9 +88,9 @@ proc nextUInt*(c: var CborParser): ?!BiggestUInt =
   if c.kind != CborEventKind.cborPositive:
     return failure(newCborError("Expected positive integer, got " & $c.kind))
   let val = c.intVal.BiggestUInt
-  let nextRes = c.next()
-  if nextRes.isFailure:
-    return failure(nextRes.error)
+
+  ?c.next()
+
   return success(val)
 
 
@@ -105,9 +105,7 @@ proc nextInt*(c: var CborParser): ?!BiggestInt =
   else:
     return failure(newCborError("Expected integer, got " & $c.kind))
 
-  let nextRes = c.next()
-  if nextRes.isFailure:
-    return failure(nextRes.error)
+  ?c.next()
 
   return success(val)
 
@@ -126,9 +124,7 @@ proc nextFloat*(c: var CborParser): ?!float64 =
   else:
     discard
 
-  let nextRes = c.next()
-  if nextRes.isFailure:
-    return failure(nextRes.error)
+  ?c.next()
 
   return success(val)
 
@@ -498,31 +494,31 @@ proc parseTime(n: CborNode): Time =
   else:
     assert false
 
-proc fromCborHook*(v: var DateTime; n: CborNode): bool =
+proc fromCborHook*(v: var DateTime; n: CborNode): ?!void =
   ## Parse a `DateTime` from the tagged string representation
   ## defined in RCF7049 section 2.4.1.
   if n.tag.isSome:
     try:
       if n.tag.get == 0 and n.kind == cborText:
         v = parseDateText(n)
-        result = true
+        return success()
       elif n.tag.get == 1 and n.kind in {cborUnsigned, cborNegative, cborFloat}:
         v = parseTime(n).utc
-        result = true
-    except ValueError: discard
+        return success()
+    except ValueError as e: return failure(e)
 
-proc fromCborHook*(v: var Time; n: CborNode): bool =
+proc fromCborHook*(v: var Time; n: CborNode): ?!void =
   ## Parse a `Time` from the tagged string representation
   ## defined in RCF7049 section 2.4.1.
   if n.tag.isSome:
     try:
       if n.tag.get == 0 and n.kind == cborText:
         v = parseDateText(n).toTime
-        result = true
+        return success()
       elif n.tag.get == 1 and n.kind in {cborUnsigned, cborNegative, cborFloat}:
         v = parseTime(n)
-        result = true
-    except ValueError: discard
+        return success()
+    except ValueError as e: return failure(e)
 
 func isTagged*(n: CborNode): bool =
   ## Check if a CBOR item has a tag.

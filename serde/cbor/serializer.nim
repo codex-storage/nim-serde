@@ -119,7 +119,7 @@ proc writeCbor*[T](str: Stream; v: T): ?!void =
   try:
     when T is CborNode:
       if v.tag.isSome:
-        return str.writeCborTag(v.tag.get)
+        ?str.writeCborTag(v.tag.get)
       case v.kind:
       of cborUnsigned:
         return str.writeCbor(v.uint)
@@ -158,7 +158,7 @@ proc writeCbor*[T](str: Stream; v: T): ?!void =
       of cborRaw:
         str.write(v.raw)
     elif compiles(writeCborHook(str, v)):
-      writeCborHook(str, v)
+      ?writeCborHook(str, v)
     elif T is SomeUnsignedInt:
       ?str.writeInitial(0, v)
     elif T is SomeSignedInt:
@@ -231,7 +231,6 @@ proc writeCbor*[T](str: Stream; v: T): ?!void =
             var be: float64
             swapEndian64 be.addr, v.unsafeAddr
             str.write be
-
         return success()
       of fcZero:
         str.write initialByte(7, 25)
@@ -262,6 +261,7 @@ proc writeCborArray*(str: Stream; args: varargs[CborNode, toCbor]): ?!void =
   ?str.writeCborArrayLen(args.len)
   for x in args:
     ?str.writeCbor(x)
+  success()
 
 proc encode*[T](v: T): ?!string =
   ## Encode an arbitrary value to CBOR binary representation.
@@ -313,12 +313,14 @@ proc writeCborHook*(str: Stream; dt: DateTime): ?!void =
   ## defined in RCF7049 section 2.4.1.
   ?writeCborTag(str, 0)
   ?writeCbor(str, format(dt, timeFormat))
+  success()
 
 proc writeCborHook*(str: Stream; t: Time): ?!void =
   ## Write a `Time` using the tagged numerical representation
   ## defined in RCF7049 section 2.4.1.
   ?writeCborTag(str, 1)
   ?writeCbor(str, t.toUnix)
+  success()
 
 func toCbor*(x: CborNode): ?!CborNode = success(x)
 
