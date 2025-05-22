@@ -1,4 +1,3 @@
-# File: /Users/rahul/Work/repos/nim-serde/tests/cbor_questionable.nim
 
 import std/unittest
 import std/options

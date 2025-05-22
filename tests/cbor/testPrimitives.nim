@@ -98,8 +98,8 @@ test "sorting":
       toCbor(false).tryValue,
     ]
   shuffle(keys)
-  for k in keys: map[k] = toCbor(0).tryValue
 
+  for k in keys: map[k] = toCbor(0).tryValue
   check not map.isSorted.tryValue
   check sort(map).isSuccess
   check map.isSorted.tryValue
