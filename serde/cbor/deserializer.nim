@@ -93,7 +93,6 @@ proc nextUInt*(c: var CborParser): ?!BiggestUInt =
   let val = c.intVal.BiggestUInt
 
   ?c.next()
-
   return success(val)
 
 
@@ -109,7 +108,6 @@ proc nextInt*(c: var CborParser): ?!BiggestInt =
     return failure(newCborError("Expected integer, got " & $c.kind))
 
   ?c.next()
-
   return success(val)
 
 proc nextFloat*(c: var CborParser): ?!float64 =
@@ -128,7 +126,6 @@ proc nextFloat*(c: var CborParser): ?!float64 =
     discard
 
   ?c.next()
-
   return success(val)
 
 func bytesLen*(c: CborParser): ?!int =
