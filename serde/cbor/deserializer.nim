@@ -1,3 +1,6 @@
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
+
 import std/[math, streams, options, tables, strutils, times, typetraits]
 import ./types
 import ./helpers
@@ -133,16 +136,6 @@ func bytesLen*(c: CborParser): ?!int =
   if c.kind != CborEventKind.cborBytes:
     return failure(newCborError("Expected bytes, got " & $c.kind))
   return success(c.intVal.int)
-
-template tryNext(c: var CborParser) =
-  let nextRes = c.next()
-  if nextRes.isFailure:
-    return failure(nextRes.error)
-
-template trySkip(c: var CborParser) =
-  let skipRes = c.skipNode()
-  if skipRes.isFailure:
-    return failure(skipRes.error)
 
 proc nextBytes*(c: var CborParser; buf: var openArray[byte]): ?!void =
   ## Read the bytes that the parser is positioned on and advance.

@@ -1,7 +1,9 @@
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
+
 import ../utils/types
 import ./types
 import std/sets
-
 
 proc newUnexpectedKindError*(
     expectedType: type, expectedKinds: string, cbor: CborNode

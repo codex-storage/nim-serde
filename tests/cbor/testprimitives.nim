@@ -1,5 +1,7 @@
-import
-  std/[base64, os, random, times, json, unittest]
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
+
+import std/[base64, os, random, times, json, unittest]
 import pkg/serde/cbor
 import pkg/questionable
 import pkg/questionable/results

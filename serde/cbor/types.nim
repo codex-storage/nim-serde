@@ -1,3 +1,6 @@
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
+
 import std/[streams, tables, options, hashes, times]
 
 const timeFormat* = initTimeFormat "yyyy-MM-dd'T'HH:mm:sszzz"

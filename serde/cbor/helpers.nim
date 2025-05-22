@@ -1,7 +1,20 @@
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
 
 import ./types
 import ./errors
 from macros import newDotExpr, newIdentNode, strVal
+
+
+template tryNext*(c: var CborParser) =
+  let nextRes = c.next()
+  if nextRes.isFailure:
+    return failure(nextRes.error)
+
+template trySkip*(c: var CborParser) =
+  let skipRes = c.skipNode()
+  if skipRes.isFailure:
+    return failure(skipRes.error)
 
 template exceptCborKind*(expectedType: type, expectedKinds: set[CborNodeKind],
     cbor: CborNode) =

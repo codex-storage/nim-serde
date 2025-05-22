@@ -1,4 +1,7 @@
-import std/[streams, options, tables, typetraits, math, endians, times, base64]
+# This file is a modified version of Emery Hemingway’s CBOR library for Nim,
+# originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
+
+import std/[streams, options, tables, typetraits, math, endians, times]
 import pkg/questionable
 import pkg/questionable/results
 import ../utils/errors
