@@ -21,11 +21,6 @@ type
     point: CustomPoint
     color: CustomColor
 
-  Person = object
-    name: string
-    age: int
-    isActive: bool
-
   Inner = object
     s: string
     nums: seq[int]
@@ -134,12 +129,22 @@ suite "CBOR deserialization":
       refInner: refObj
     )
 
+    # Serialize to CBOR with encode
+    without encodedStr =? encode(original), error:
+      fail()
+
     # Serialize to CBOR
     let stream = newStringStream()
-    stream.writeCbor(original)
+    if stream.writeCbor(original).isFailure:
+      fail()
+
     let cborData = stream.data
+    # Check that both serialized forms are equal
+    check cborData == encodedStr
+
     # Parse CBOR back to CborNode
     let parseResult = parseCbor(cborData)
+
     check parseResult.isSuccess
     let node = parseResult.tryValue
 

@@ -9,11 +9,11 @@ import pkg/questionable/results
 export results
 export types
 
+{.push raises: [].}
 
 func isIndefinite*(c: CborParser): bool {.inline.} = c.minor == 31
   ## Return true if the parser is positioned on an item of indefinite length.
 
-{.push raises: [].}
 proc open*(c: var CborParser; s: Stream) =
   ## Begin parsing a stream of CBOR in binary form.
   ## The parser will be initialized in an EOF state, call
