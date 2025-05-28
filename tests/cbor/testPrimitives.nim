@@ -27,7 +27,7 @@ suite "decode":
           controlCbor = base64.decode v["cbor"].getStr
         without c =? parseCbor(controlCbor), error:
           fail()
-        let js = c.toJsonHook()
+        let js = c.toJson()
         if js.isNil:
           fail()
         else:

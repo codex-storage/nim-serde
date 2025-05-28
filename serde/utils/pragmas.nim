@@ -6,8 +6,10 @@ export types
 
 {.push raises: [].}
 
-template serialize*(key = "", ignore = false, mode = SerdeMode.OptOut) {.pragma.}
-template deserialize*(key = "", ignore = false, mode = SerdeMode.OptOut) {.pragma.}
+template serialize*(key = "", ignore = false,
+    mode = SerdeMode.OptOut) {.pragma.}
+template deserialize*(key = "", ignore = false,
+    mode = SerdeMode.OptOut) {.pragma.}
 
 proc isDefault[T](paramValue: T): bool {.compileTime.} =
   when T is SerdeMode:
@@ -23,7 +25,8 @@ template expectMissingPragmaParam*(value, pragma, name, msg) =
         if paramName == name and not paramValue.isDefault:
           raiseAssert(msg)
 
-template getSerdeFieldOptions*(pragma, fieldName, fieldValue): SerdeFieldOptions =
+template getSerdeFieldOptions*(pragma, fieldName,
+    fieldValue): SerdeFieldOptions =
   var opts = SerdeFieldOptions(key: fieldName, ignore: false)
   when fieldValue.hasCustomPragma(pragma):
     fieldValue.expectMissingPragmaParam(
@@ -43,12 +46,14 @@ template getSerdeMode*(T, pragma): SerdeMode =
     T.expectMissingPragmaParam(
       pragma,
       "key",
-      "Cannot set " & astToStr(pragma) & " 'key' on '" & $T & "' type definition.",
+      "Cannot set " & astToStr(pragma) & " 'key' on '" & $T &
+          "' type definition.",
     )
     T.expectMissingPragmaParam(
       pragma,
       "ignore",
-      "Cannot set " & astToStr(pragma) & " 'ignore' on '" & $T & "' type definition.",
+      "Cannot set " & astToStr(pragma) & " 'ignore' on '" & $T &
+          "' type definition.",
     )
     let (_, _, mode) = T.getCustomPragmaVal(pragma)
     mode

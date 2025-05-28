@@ -1,16 +1,20 @@
 # This file is a modified version of Emery Hemingway’s CBOR library for Nim,
 # originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
 
-import std/[math, streams, options, tables, strutils, times, typetraits]
+import std/[math, streams, options, tables, strutils, times, typetraits, macros]
 import ./types
 import ./helpers
-import ../utils/types
+import ../utils/types as utilsTypes
+import ../utils/pragmas
 import ./errors
 import pkg/questionable
 import pkg/questionable/results
 
 export results
 export types
+export pragmas
+export utilsTypes
+
 
 {.push raises: [].}
 
@@ -95,7 +99,6 @@ proc nextUInt*(c: var CborParser): ?!BiggestUInt =
   ?c.next()
   return success(val)
 
-
 proc nextInt*(c: var CborParser): ?!BiggestInt =
   ## Parse the integer value that the parser is positioned on.
   var val: BiggestInt
@@ -146,7 +149,7 @@ proc nextBytes*(c: var CborParser; buf: var openArray[byte]): ?!void =
       let n = c.s.readData(buf[0].addr, buf.len)
       if n != buf.len:
         return failure(newCborError("truncated read of CBOR data"))
-    tryNext(c)
+    ?c.next()
     success()
   except OSError as e:
     return failure(e.msg)
@@ -178,13 +181,12 @@ proc nextText*(c: var CborParser; buf: var string): ?!void =
       let n = c.s.readData(buf[0].addr, buf.len)
       if n != buf.len:
         return failure(newCborError("truncated read of CBOR data"))
-    tryNext(c)
+    ?c.next()
     success()
   except IOError as e:
     return failure(e.msg)
   except OSError as e:
     return failure(e.msg)
-
 
 proc nextText*(c: var CborParser): ?!string =
   ## Read the text that the parser is positioned on into a string and advance.
@@ -195,20 +197,26 @@ proc nextText*(c: var CborParser): ?!string =
 
   return success(buf)
 
-func arrayLen*(c: CborParser): int =
+func arrayLen*(c: CborParser): ?!int =
   ## Return the length of the array that the parser is positioned on.
-  assert(c.kind == CborEventKind.cborArray, $c.kind)
-  c.intVal.int
+  if c.kind != CborEventKind.cborArray:
+    return failure(newCborError("Expected array, got " & $c.kind))
 
-func mapLen*(c: CborParser): int =
+  return success(c.intVal.int)
+
+func mapLen*(c: CborParser): ?!int =
   ## Return the length of the map that the parser is positioned on.
-  assert(c.kind == CborEventKind.cborMap, $c.kind)
-  c.intVal.int
+  if c.kind != CborEventKind.cborMap:
+    return failure(newCborError("Expected map, got " & $c.kind))
 
-func tag*(c: CborParser): uint64 =
+  return success(c.intVal.int)
+
+func tag*(c: CborParser): ?!uint64 =
   ## Return the tag value the parser is positioned on.
-  assert(c.kind == CborEventKind.cborTag, $c.kind)
-  c.intVal
+  if c.kind != CborEventKind.cborTag:
+    return failure(newCborError("Expected tag, got " & $c.kind))
+
+  return success(c.intVal)
 
 proc skipNode*(c: var CborParser): ?!void =
   ## Skip the item the parser is positioned on.
@@ -221,7 +229,7 @@ proc skipNode*(c: var CborParser): ?!void =
       return c.next()
     of CborEventKind.cborBytes, CborEventKind.cborText:
       if c.isIndefinite:
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
           if c.kind != CborEventKind.cborBytes:
             return failure(newCborError("expected bytes, got " & $c.kind))
@@ -232,28 +240,28 @@ proc skipNode*(c: var CborParser): ?!void =
         return c.next()
     of CborEventKind.cborArray:
       if c.isIndefinite:
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
-          trySkip(c)
+          ?c.skipNode()
         return c.next()
       else:
         let len = c.intVal
-        tryNext(c)
+        ?c.next()
         for i in 1..len:
-          trySkip(c)
+          ?c.skipNode()
     of CborEventKind.cborMap:
       let mapLen = c.intVal.int
       if c.isIndefinite:
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
-          trySkip(c)
+          ?c.skipNode()
         return c.next()
       else:
-        tryNext(c)
+        ?c.next()
         for _ in 1 .. mapLen:
-          trySkip(c)
+          ?c.skipNode()
     of CborEventKind.cborTag:
-      tryNext(c)
+      ?c.next()
       return c.skipNode()
     of CborEventKind.cborFloat:
       without f =? c.nextFloat(), error:
@@ -279,14 +287,14 @@ proc nextNode*(c: var CborParser): ?!CborNode =
       return failure(newCborError("end of CBOR stream"))
     of CborEventKind.cborPositive:
       next = CborNode(kind: cborUnsigned, uint: c.intVal)
-      tryNext(c)
+      ?c.next()
     of CborEventKind.cborNegative:
       next = CborNode(kind: cborNegative, int: -1 - c.intVal.int64)
-      tryNext(c)
+      ?c.next()
     of CborEventKind.cborBytes:
       if c.isIndefinite:
         next = CborNode(kind: cborBytes, bytes: newSeq[byte]())
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
           if c.kind != CborEventKind.cborBytes:
             return failure(newCborError("Expected bytes, got " & $c.kind))
@@ -297,7 +305,7 @@ proc nextNode*(c: var CborParser): ?!CborNode =
           let n = c.s.readData(next.bytes[pos].addr, chunkLen)
           if n != chunkLen:
             return failure(newCborError("truncated read of CBOR data"))
-          tryNext(c)
+          ?c.next()
       else:
         without rawBytes =? c.nextBytes(), error:
           return failure(error)
@@ -305,7 +313,7 @@ proc nextNode*(c: var CborParser): ?!CborNode =
     of CborEventKind.cborText:
       if c.isIndefinite:
         next = CborNode(kind: cborText, text: "")
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
           if c.kind != CborEventKind.cborText:
             return failure(newCborError("Expected text, got " & $c.kind))
@@ -316,8 +324,8 @@ proc nextNode*(c: var CborParser): ?!CborNode =
           let n = c.s.readData(next.text[pos].addr, chunkLen)
           if n != chunkLen:
             return failure(newCborError("truncated read of CBOR data"))
-          tryNext(c)
-        tryNext(c)
+          ?c.next()
+        ?c.next()
       else:
         without text =? c.nextText(), error:
           return failure(error)
@@ -325,14 +333,14 @@ proc nextNode*(c: var CborParser): ?!CborNode =
     of CborEventKind.cborArray:
       next = CborNode(kind: cborArray, seq: newSeq[CborNode](c.intVal))
       if c.isIndefinite:
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
           without node =? c.nextNode(), error:
             return failure(error)
           next.seq.add(node)
-        tryNext(c)
+        ?c.next()
       else:
-        tryNext(c)
+        ?c.next()
         for i in 0..next.seq.high:
           without node =? c.nextNode(), error:
             return failure(error)
@@ -342,16 +350,16 @@ proc nextNode*(c: var CborParser): ?!CborNode =
       next = CborNode(kind: cborMap, map: initOrderedTable[CborNode, CborNode](
           mapLen.nextPowerOfTwo))
       if c.isIndefinite:
-        tryNext(c)
+        ?c.next()
         while c.kind != CborEventKind.cborBreak:
           without key =? c.nextNode(), error:
             return failure(error)
           without val =? c.nextNode(), error:
             return failure(error)
           next.map[key] = val
-        tryNext(c)
+        ?c.next()
       else:
-        tryNext(c)
+        ?c.next()
         for _ in 1 .. mapLen:
           without key =? c.nextNode(), error:
             return failure(error)
@@ -360,7 +368,7 @@ proc nextNode*(c: var CborParser): ?!CborNode =
           next.map[key] = val
     of CborEventKind.cborTag:
       let tag = c.intVal
-      tryNext(c)
+      ?c.next()
       without node =? c.nextNode(), error:
         return failure(error)
       next = node
@@ -371,7 +379,7 @@ proc nextNode*(c: var CborParser): ?!CborNode =
         next = CborNode(kind: cborSimple, simple: c.intVal.uint8)
       else:
         next = CborNode(kind: cborSimple, simple: c.minor)
-      tryNext(c)
+      ?c.next()
     of CborEventKind.cborFloat:
       without f =? c.nextFloat(), error:
         return failure(error)
@@ -383,15 +391,17 @@ proc nextNode*(c: var CborParser): ?!CborNode =
     return failure(e.msg)
   except IOError as e:
     return failure(e.msg)
-  except Exception as e:
+  except CatchableError as e:
     return failure(e.msg)
+  except Exception as e:
+    raise newException(Defect, e.msg, e)
 
 
 proc readCbor*(s: Stream): ?!CborNode =
   ## Parse a stream into a CBOR object.
   var parser: CborParser
   parser.open(s)
-  tryNext(parser)
+  ?parser.next()
   parser.nextNode()
 
 proc parseCbor*(s: string): ?!CborNode =
@@ -473,7 +483,7 @@ proc getInt*(n: CborNode; default: int = 0): int =
   else: default
 
 proc parseDateText(n: CborNode): DateTime {.raises: [TimeParseError].} =
-  parse(n.text, timeFormat)
+  parse(n.text, dateTimeFormat)
 
 proc parseTime(n: CborNode): Time =
   case n.kind
@@ -557,7 +567,6 @@ proc getSigned*(n: CborNode; default: int64 = 0): int64 =
   of cborNegative: n.int
   else: default
 
-
 func getFloat*(n: CborNode; default = 0.0): float =
   ## Get the floating-poing value of a ``CborNode`` or a fallback.
   if n.kind == cborFloat:
@@ -565,12 +574,69 @@ func getFloat*(n: CborNode; default = 0.0): float =
   else:
     default
 
+proc fromCbor*[T: distinct](_: type T; n: CborNode): ?!T =
+  success T(?T.distinctBase.fromCbor(n))
+
+proc fromCbor*[T: SomeUnsignedInt](_: type T; n: CborNode): ?!T =
+  expectCborKind(T, {cborUnsigned}, n)
+  var v = T(n.uint)
+  if v.BiggestUInt == n.uint:
+    return success(v)
+  else:
+    return failure(newCborError("Value overflow for unsigned integer"))
+
+proc fromCbor*[T: SomeSignedInt](_: type T; n: CborNode): ?!T =
+  expectCborKind(T, {cborUnsigned, cborNegative}, n)
+  if n.kind == cborUnsigned:
+    var v = T(n.uint)
+    if v.BiggestUInt == n.uint:
+      return success(v)
+    else:
+      return failure(newCborError("Value overflow for signed integer"))
+  elif n.kind == cborNegative:
+    var v = T(n.int)
+    if v.BiggestInt == n.int:
+      return success(v)
+    else:
+      return failure(newCborError("Value overflow for signed integer"))
+
+proc fromCbor*[T: SomeFloat](_: type T; n: CborNode): ?!T =
+  expectCborKind(T, {cborFloat}, n)
+  return success(T(n.float))
+
+proc fromCbor*(_: type seq[byte]; n: CborNode): ?!seq[byte] =
+  expectCborKind(seq[byte], cborBytes, n)
+  return success(n.bytes)
+
+proc fromCbor*(_: type string; n: CborNode): ?!string =
+  expectCborKind(string, cborText, n)
+  return success(n.text)
+
+proc fromCbor*(_: type bool; n: CborNode): ?!bool =
+  if not n.isBool:
+    return failure(newCborError("Expected boolean, got " & $n.kind))
+  return success(n.getBool)
+
+proc fromCbor*[T](_: type seq[T]; n: CborNode): ?!seq[T] =
+  expectCborKind(seq[T], cborArray, n)
+  var arr = newSeq[T](n.seq.len)
+  for i, elem in n.seq:
+    arr[i] = ?T.fromCbor(elem)
+  success arr
+
+proc fromCbor*[T: tuple](_: type T; n: CborNode): ?!T =
+  expectCborKind(T, cborArray, n)
+  var res = T.default
+  if n.seq.len != T.tupleLen:
+    return failure(newCborError("Expected tuple of length " & $T.tupleLen))
+  var i: int
+  for f in fields(res):
+    f = ?typeof(f).fromCbor(n.seq[i])
+    inc i
+
+  success res
 
 proc fromCbor*[T](v: var T; n: CborNode): ?!void =
-  ## Return a Result containing the value if `v` can be converted from a given `CborNode`,
-  ## or an error if conversion fails.
-  ## Can be extended and overriden with `fromCborHook(v: var T; n: CborNode)`
-  ## for specific types of `T`.
   try:
     when T is CborNode:
       v = n
@@ -580,14 +646,14 @@ proc fromCbor*[T](v: var T; n: CborNode): ?!void =
     elif T is distinct:
       return fromCbor(distinctBase v, n)
     elif T is SomeUnsignedInt:
-      exceptCborKind(T, {cborUnsigned}, n)
+      expectCborKind(T, {cborUnsigned}, n)
       v = T n.uint
       if v.BiggestUInt == n.uint:
         return success()
       else:
         return failure(newCborError("Value overflow for unsigned integer"))
     elif T is SomeSignedInt:
-      exceptCborKind(T, {cborUnsigned, cborNegative}, n)
+      expectCborKind(T, {cborUnsigned, cborNegative}, n)
       if n.kind == cborUnsigned:
         v = T n.uint
         if v.BiggestUInt == n.uint:
@@ -606,19 +672,19 @@ proc fromCbor*[T](v: var T; n: CborNode): ?!void =
       v = n.getBool
       return success()
     elif T is SomeFloat:
-      exceptCborKind(T, {cborFloat}, n)
+      expectCborKind(T, {cborFloat}, n)
       v = T n.float
       return success()
     elif T is seq[byte]:
-      exceptCborKind(T, {cborBytes}, n)
+      expectCborKind(T, {cborBytes}, n)
       v = n.bytes
       return success()
     elif T is string:
-      exceptCborKind(T, {cborText}, n)
+      expectCborKind(T, {cborText}, n)
       v = n.text
       return success()
     elif T is seq:
-      exceptCborKind(T, {cborArray}, n)
+      expectCborKind(T, {cborArray}, n)
       v.setLen n.seq.len
       for i, e in n.seq:
         let itemResult = fromCbor(v[i], e)
@@ -627,7 +693,7 @@ proc fromCbor*[T](v: var T; n: CborNode): ?!void =
           return failure(itemResult.error)
       return success()
     elif T is tuple:
-      exceptCborKind(T, {cborArray}, n)
+      expectCborKind(T, {cborArray}, n)
       if n.seq.len != T.tupleLen:
         return failure(newCborError("Expected tuple of length " & $T.tupleLen))
       var i: int
@@ -645,7 +711,7 @@ proc fromCbor*[T](v: var T; n: CborNode): ?!void =
         if isNil(v): new(v)
         return fromCbor(v[], n)
     elif T is object:
-      exceptCborKind(T, {cborMap}, n)
+      expectCborKind(T, {cborMap}, n)
       var
         i: int
         key = CborNode(kind: cborText)
@@ -664,5 +730,45 @@ proc fromCbor*[T](v: var T; n: CborNode): ?!void =
         return failure(newCborError("Extra fields in map"))
     else:
       return failure(newCborError("Unsupported type: " & $T))
+  except CatchableError as e:
+    return failure newCborError(e.msg)
   except Exception as e:
-    return failure(newCborError(e.msg))
+    raise newException(Defect, e.msg, e)
+
+proc fromCbor*[T: ref object or object](_: type T; n: CborNode): ?!T =
+  when T is CborNode:
+    return success T(n)
+
+  expectCborKind(T, {cborMap}, n)
+
+  var res =
+    when type(T) is ref:
+      T.new()
+    else:
+      T.default
+
+  try:
+    var
+      i: int
+      key = CborNode(kind: cborText)
+    for name, value in fieldPairs(
+      when type(T) is ref:
+        res[]
+      else:
+        res
+    ):
+      key.text = name
+
+      if not n.map.hasKey key:
+        return failure(newCborError("Missing field: " & name))
+      else:
+        value = ?typeof(value).fromCbor(n.map[key])
+        inc i
+    if i == n.map.len:
+      return success(res)
+    else:
+      return failure(newCborError("Extra fields in map"))
+  except CatchableError as e:
+    return failure newCborError(e.msg)
+  except Exception as e:
+    raise newException(Defect, e.msg, e)

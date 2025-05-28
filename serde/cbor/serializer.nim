@@ -303,19 +303,22 @@ proc sort*(n: var CborNode): ?!void =
     for key, val in n.map.mpairs:
       without res =? key.toRaw, error:
         return failure(error)
-      tmp[res] = move(val)
+      if tmp.hasKey(res):
+        tmp[res] = move(val)
     sort(tmp) do (x, y: tuple[k: CborNode; v: CborNode]) -> int:
       result = cmp(x.k.raw, y.k.raw)
     n.map = move tmp
     success()
-  except Exception as e:
+  except CatchableError as e:
     return failure(e.msg)
+  except Exception as e:
+    raise newException(Defect, e.msg, e)
 
 proc writeCborHook*(str: Stream; dt: DateTime): ?!void =
   ## Write a `DateTime` using the tagged string representation
   ## defined in RCF7049 section 2.4.1.
   ?writeCborTag(str, 0)
-  ?writeCbor(str, format(dt, timeFormat))
+  ?writeCbor(str, format(dt, dateTimeFormat))
   success()
 
 proc writeCborHook*(str: Stream; t: Time): ?!void =
@@ -345,8 +348,10 @@ func toCbor*(x: openArray[CborNode]): ?!CborNode =
 func toCbor*(pairs: openArray[(CborNode, CborNode)]): ?!CborNode =
   try:
     return success(CborNode(kind: cborMap, map: pairs.toOrderedTable))
-  except Exception as e:
+  except CatchableError as e:
     return failure(e.msg)
+  except Exception as e:
+    raise newException(Defect, e.msg, e)
 
 func toCbor*(tag: uint64; val: CborNode): ?!CborNode =
   without res =? toCbor(val), error:
@@ -367,7 +372,6 @@ func toCbor*(x: SomeFloat): ?!CborNode =
 
 func toCbor*(x: pointer): ?!CborNode =
   ## A hack to produce a CBOR null item.
-  assert(x.isNil)
   if not x.isNil:
     return failure("pointer is not nil")
   success(CborNode(kind: cborSimple, simple: 22))

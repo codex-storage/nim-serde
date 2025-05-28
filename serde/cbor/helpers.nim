@@ -5,39 +5,27 @@ import ./types
 import ./errors
 from macros import newDotExpr, newIdentNode, strVal
 
-
-template tryNext*(c: var CborParser) =
-  let nextRes = c.next()
-  if nextRes.isFailure:
-    return failure(nextRes.error)
-
-template trySkip*(c: var CborParser) =
-  let skipRes = c.skipNode()
-  if skipRes.isFailure:
-    return failure(skipRes.error)
-
-template exceptCborKind*(expectedType: type, expectedKinds: set[CborNodeKind],
+template expectCborKind*(expectedType: type, expectedKinds: set[CborNodeKind],
     cbor: CborNode) =
   if cbor.kind notin expectedKinds:
     return failure(newUnexpectedKindError(expectedType, expectedKinds, cbor))
 
-template exceptCborKind*(expectedType: type, expectedKind: CborNodeKind,
+template expectCborKind*(expectedType: type, expectedKind: CborNodeKind,
     cbor: CborNode) =
-  exceptCborKind(expectedType, {expectedKind}, cbor)
+  expectCborKind(expectedType, {expectedKind}, cbor)
 
-template exceptCborKind*(expectedType: type, expectedKinds: set[CborEventKind],
+template expectCborKind*(expectedType: type, expectedKinds: set[CborEventKind],
     cbor: CborNode) =
   if cbor.kind notin expectedKinds:
     return failure(newUnexpectedKindError(expectedType, expectedKinds, cbor))
 
-template exceptCborKind*(expectedType: type, expectedKind: CborEventKind,
+template expectCborKind*(expectedType: type, expectedKind: CborEventKind,
     cbor: CborNode) =
-  exceptCborKind(expectedType, {expectedKind}, cbor)
+  expectCborKind(expectedType, {expectedKind}, cbor)
 
 macro dot*(obj: object, fld: string): untyped =
   ## Turn ``obj.dot("fld")`` into ``obj.fld``.
   newDotExpr(obj, newIdentNode(fld.strVal))
-
 
 func floatSingle*(half: uint16): float32 =
   ## Convert a 16-bit float to 32-bits.

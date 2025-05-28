@@ -3,7 +3,8 @@
 
 import std/[streams, tables, options, hashes, times]
 
-const timeFormat* = initTimeFormat "yyyy-MM-dd'T'HH:mm:sszzz"
+# This format is defined in RCF8949 section 3.4.1.
+const dateTimeFormat* = initTimeFormat "yyyy-MM-dd'T'HH:mm:sszzz"
 
 const
   PositiveMajor* = 0'u8

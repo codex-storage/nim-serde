@@ -24,7 +24,7 @@ type
     s: string
     nums: seq[int]
 
-  CompositeNested = object
+  CompositeNested {.deserialize.} = object
     u: uint64
     n: int
     b: seq[byte]
@@ -37,15 +37,16 @@ type
     coordinates: tuple[x: int, y: int, label: string]
     refInner: ref Inner
 
-proc fromCborHook*(v: var CustomColor, n: CborNode): ?!void =
+proc fromCbor*(_: type CustomColor, n: CborNode): ?!CustomColor =
+  var v: CustomColor
   if n.kind == cborNegative:
     v = CustomColor(n.int)
-    result = success()
+    success(v)
   else:
-    result = failure(newSerdeError("Expected signed integer, got " & $n.kind))
+    failure(newSerdeError("Expected signed integer, got " & $n.kind))
 
 # Custom fromCborHook for CustomPoint
-proc fromCborHook*(v: var CustomPoint, n: CborNode): ?!void =
+proc fromCbor*(_: type CustomPoint, n: CborNode): ?!CustomPoint =
   if n.kind == cborArray and n.seq.len == 2:
     var x, y: int
     let xResult = fromCbor(x, n.seq[0])
@@ -56,10 +57,9 @@ proc fromCborHook*(v: var CustomPoint, n: CborNode): ?!void =
     if yResult.isFailure:
       return failure(yResult.error)
 
-    v = CustomPoint(x: x, y: y)
-    result = success()
+    return success(CustomPoint(x: x, y: y))
   else:
-    result = failure(newSerdeError("Expected array of length 2 for CustomPoint"))
+    return failure(newSerdeError("Expected array of length 2 for CustomPoint"))
 
 # Helper function to create CBOR data for testing
 proc createPointCbor(x, y: int): CborNode =
@@ -97,10 +97,11 @@ suite "CBOR deserialization":
     let node = createObjectCbor("Test Object", point, Green)
 
     # Deserialize
-    var deserializedObj: CustomObject
+    # var deserializedObj: CustomObject
     # Check result
-    let result = fromCbor(deserializedObj, node)
+    let result = CustomObject.fromCbor(node)
     check result.isSuccess
+    var deserializedObj = result.tryValue
     check deserializedObj.name == "Test Object"
     check deserializedObj.point.x == 15
     check deserializedObj.point.y == 25
@@ -148,10 +149,9 @@ suite "CBOR deserialization":
     let node = parseResult.tryValue
 
     # Deserialize to CompositeNested object
-    var roundtrip: CompositeNested
-    let deserResult = fromCbor(roundtrip, node)
-    check deserResult.isSuccess
-
+    let res = CompositeNested.fromCbor(node)
+    check res.isSuccess
+    let roundtrip = res.tryValue
     # Check top-level fields
     check roundtrip.u == original.u
     check roundtrip.n == original.n

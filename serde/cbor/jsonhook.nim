@@ -7,7 +7,7 @@ import ./types
 import ./errors
 import ./deserializer
 
-proc toJsonHook*(n: CborNode): JsonNode =
+proc toJson*(n: CborNode): JsonNode =
   case n.kind:
     of cborUnsigned:
       newJInt n.uint.BiggestInt
@@ -20,15 +20,15 @@ proc toJsonHook*(n: CborNode): JsonNode =
     of cborArray:
       let a = newJArray()
       for e in n.seq.items:
-        a.add(e.toJsonHook)
+        a.add(e.toJson)
       a
     of cborMap:
       let o = newJObject()
       for k, v in n.map.pairs:
         if k.kind == cborText:
-          o[k.text] = v.toJsonHook
+          o[k.text] = v.toJson
         else:
-          o[$k] = v.toJsonHook
+          o[$k] = v.toJson
       o
     of cborTag: nil
     of cborSimple:
@@ -42,4 +42,4 @@ proc toJsonHook*(n: CborNode): JsonNode =
     of cborRaw:
       without parsed =? parseCbor(n.raw), error:
         raise newCborError(error.msg)
-      toJsonHook(parsed)
+      toJson(parsed)
