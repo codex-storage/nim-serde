@@ -1,6 +1,7 @@
 import std/unittest
 import std/options
 import std/streams
+import std/times
 import std/macros
 import pkg/serde
 import pkg/questionable
@@ -59,6 +60,8 @@ type
     refNewInner: NewType                              # Custom reference type
     refNil: ref Inner                                 # Nil reference
     customPoint: CustomPoint                          # Custom type
+    time: Time                                        # Time
+    date: DateTime                                    # DateTime
 
 # Custom deserialization for CustomColor enum
 # Converts a CBOR negative integer to a CustomColor enum value
@@ -169,7 +172,9 @@ suite "CBOR deserialization":
       refInner: refInner,                                   # reference to object
       refNewInner: refNewObj,                               # custom reference type
       refNil: nil,                                          # nil reference
-      customPoint: CustomPoint(x: 15, y: 25)                # custom type
+      customPoint: CustomPoint(x: 15, y: 25),               # custom type
+      time: getTime(),                                      # time
+      date: now().utc                                       # date
     )
 
     # Test serialization using encode helper

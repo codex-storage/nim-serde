@@ -494,30 +494,32 @@ proc parseTime(n: CborNode): Time =
   else:
     assert false
 
-proc fromCborHook*(v: var DateTime; n: CborNode): ?!void =
+proc fromCbor*(_: type DateTime; n: CborNode): ?!DateTime =
   ## Parse a `DateTime` from the tagged string representation
   ## defined in RCF7049 section 2.4.1.
+  var v: DateTime
   if n.tag.isSome:
     try:
       if n.tag.get == 0 and n.kind == cborText:
         v = parseDateText(n)
-        return success()
+        return success(v)
       elif n.tag.get == 1 and n.kind in {cborUnsigned, cborNegative, cborFloat}:
         v = parseTime(n).utc
-        return success()
+        return success(v)
     except ValueError as e: return failure(e)
 
-proc fromCborHook*(v: var Time; n: CborNode): ?!void =
+proc fromCbor*(_: type Time; n: CborNode): ?!Time =
   ## Parse a `Time` from the tagged string representation
   ## defined in RCF7049 section 2.4.1.
+  var v: Time
   if n.tag.isSome:
     try:
       if n.tag.get == 0 and n.kind == cborText:
         v = parseDateText(n).toTime
-        return success()
+        return success(v)
       elif n.tag.get == 1 and n.kind in {cborUnsigned, cborNegative, cborFloat}:
         v = parseTime(n)
-        return success()
+        return success(v)
     except ValueError as e: return failure(e)
 
 func isTagged*(n: CborNode): bool =
