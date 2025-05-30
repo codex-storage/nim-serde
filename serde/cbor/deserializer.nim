@@ -2,9 +2,9 @@
 # originally available at https://github.com/ehmry/cbor-nim and released under The Unlicense.
 
 import std/[math, streams, options, tables, strutils, times, typetraits, macros]
-import ./types
+import ./types as cborTypes
 import ./helpers
-import ../utils/types as utilsTypes
+import ../utils/types
 import ../utils/pragmas
 import ./errors
 import pkg/questionable
@@ -13,8 +13,8 @@ import pkg/questionable/results
 export results
 export types
 export pragmas
-export utilsTypes
-
+export cborTypes
+export macros
 
 {.push raises: [].}
 
@@ -636,117 +636,126 @@ proc fromCbor*[T: tuple](_: type T; n: CborNode): ?!T =
 
   success res
 
-proc fromCbor*[T](v: var T; n: CborNode): ?!void =
-  try:
-    when T is CborNode:
-      v = n
-      result = success()
-    elif compiles(fromCborHook(v, n)):
-      return fromCborHook(v, n)
-    elif T is distinct:
-      return fromCbor(distinctBase v, n)
-    elif T is SomeUnsignedInt:
-      expectCborKind(T, {cborUnsigned}, n)
-      v = T n.uint
-      if v.BiggestUInt == n.uint:
-        return success()
-      else:
-        return failure(newCborError("Value overflow for unsigned integer"))
-    elif T is SomeSignedInt:
-      expectCborKind(T, {cborUnsigned, cborNegative}, n)
-      if n.kind == cborUnsigned:
-        v = T n.uint
-        if v.BiggestUInt == n.uint:
-          return success()
-        else:
-          return failure(newCborError("Value overflow for un signed integer"))
-      elif n.kind == cborNegative:
-        v = T n.int
-        if v.BiggestInt == n.int:
-          return success()
-        else:
-          return failure(newCborError("Value overflow for signed integer"))
-    elif T is bool:
-      if not n.isBool:
-        return failure(newCborError("Expected boolean, got " & $n.kind))
-      v = n.getBool
-      return success()
-    elif T is SomeFloat:
-      expectCborKind(T, {cborFloat}, n)
-      v = T n.float
-      return success()
-    elif T is seq[byte]:
-      expectCborKind(T, {cborBytes}, n)
-      v = n.bytes
-      return success()
-    elif T is string:
-      expectCborKind(T, {cborText}, n)
-      v = n.text
-      return success()
-    elif T is seq:
-      expectCborKind(T, {cborArray}, n)
-      v.setLen n.seq.len
-      for i, e in n.seq:
-        let itemResult = fromCbor(v[i], e)
-        if itemResult.isFailure:
-          v.setLen 0
-          return failure(itemResult.error)
-      return success()
-    elif T is tuple:
-      expectCborKind(T, {cborArray}, n)
-      if n.seq.len != T.tupleLen:
-        return failure(newCborError("Expected tuple of length " & $T.tupleLen))
-      var i: int
-      for f in fields(v):
-        let itemResult = fromCbor(f, n.seq[i])
-        if itemResult.isFailure:
-          return failure(itemResult.error)
-        inc i
-      return success()
-    elif T is ref:
-      if n.isNull:
-        v = nil
-        return success()
-      else:
-        if isNil(v): new(v)
-        return fromCbor(v[], n)
-    elif T is object:
-      expectCborKind(T, {cborMap}, n)
-      var
-        i: int
-        key = CborNode(kind: cborText)
-      for s, _ in fieldPairs(v):
-        key.text = s
-        if not n.map.hasKey key:
-          return failure(newCborError("Missing field: " & s))
-        else:
-          let fieldResult = fromCbor(v.dot(s), n.map[key])
-          if fieldResult.isFailure:
-            return failure(fieldResult.error)
-          inc i
-      if i == n.map.len:
-        return success()
-      else:
-        return failure(newCborError("Extra fields in map"))
-    else:
-      return failure(newCborError("Unsupported type: " & $T))
-  except CatchableError as e:
-    return failure newCborError(e.msg)
-  except Exception as e:
-    raise newException(Defect, e.msg, e)
+# proc fromCbor*[T](v: var T; n: CborNode): ?!void =
+#   try:
+#     when T is CborNode:
+#       v = n
+#       result = success()
+#     elif compiles(fromCborHook(v, n)):
+#       return fromCborHook(v, n)
+#     elif T is distinct:
+#       return fromCbor(distinctBase v, n)
+#     elif T is SomeUnsignedInt:
+#       expectCborKind(T, {cborUnsigned}, n)
+#       v = T n.uint
+#       if v.BiggestUInt == n.uint:
+#         return success()
+#       else:
+#         return failure(newCborError("Value overflow for unsigned integer"))
+#     elif T is SomeSignedInt:
+#       expectCborKind(T, {cborUnsigned, cborNegative}, n)
+#       if n.kind == cborUnsigned:
+#         v = T n.uint
+#         if v.BiggestUInt == n.uint:
+#           return success()
+#         else:
+#           return failure(newCborError("Value overflow for un signed integer"))
+#       elif n.kind == cborNegative:
+#         v = T n.int
+#         if v.BiggestInt == n.int:
+#           return success()
+#         else:
+#           return failure(newCborError("Value overflow for signed integer"))
+#     elif T is bool:
+#       if not n.isBool:
+#         return failure(newCborError("Expected boolean, got " & $n.kind))
+#       v = n.getBool
+#       return success()
+#     elif T is SomeFloat:
+#       expectCborKind(T, {cborFloat}, n)
+#       v = T n.float
+#       return success()
+#     elif T is seq[byte]:
+#       expectCborKind(T, {cborBytes}, n)
+#       v = n.bytes
+#       return success()
+#     elif T is string:
+#       expectCborKind(T, {cborText}, n)
+#       v = n.text
+#       return success()
+#     elif T is seq:
+#       expectCborKind(T, {cborArray}, n)
+#       v.setLen n.seq.len
+#       for i, e in n.seq:
+#         let itemResult = fromCbor(v[i], e)
+#         if itemResult.isFailure:
+#           v.setLen 0
+#           return failure(itemResult.error)
+#       return success()
+#     elif T is tuple:
+#       expectCborKind(T, {cborArray}, n)
+#       if n.seq.len != T.tupleLen:
+#         return failure(newCborError("Expected tuple of length " & $T.tupleLen))
+#       var i: int
+#       for f in fields(v):
+#         let itemResult = fromCbor(f, n.seq[i])
+#         if itemResult.isFailure:
+#           return failure(itemResult.error)
+#         inc i
+#       return success()
+#     elif T is ref:
+#       if n.isNull:
+#         v = nil
+#         return success()
+#       else:
+#         if isNil(v): new(v)
+#         return fromCbor(v[], n)
+#     elif T is object:
+#       expectCborKind(T, {cborMap}, n)
+#       var
+#         i: int
+#         key = CborNode(kind: cborText)
+#       for s, _ in fieldPairs(v):
+#         key.text = s
+#         if not n.map.hasKey key:
+#           return failure(newCborError("Missing field: " & s))
+#         else:
+#           let fieldResult = fromCbor(v.dot(s), n.map[key])
+#           if fieldResult.isFailure:
+#             return failure(fieldResult.error)
+#           inc i
+#       if i == n.map.len:
+#         return success()
+#       else:
+#         return failure(newCborError("Extra fields in map"))
+#     else:
+#       return failure(newCborError("Unsupported type: " & $T))
+#   except CatchableError as e:
+#     return failure newCborError(e.msg)
+#   except Exception as e:
+#     raise newException(Defect, e.msg, e)
 
-proc fromCbor*[T: ref object or object](_: type T; n: CborNode): ?!T =
+proc fromCbor*[T: ref](_: type T; n: CborNode): ?!T =
+  when T is ref:
+    if n.isNull:
+      return success(T.default)
+    else:
+      var resRef = T.new()
+      let res = typeof(resRef[]).fromCbor(n)
+      if res.isFailure:
+        return failure(newCborError(res.error.msg))
+      resRef[] = res.value
+      return success(resRef)
+
+proc fromCbor*[T: object](_: type T; n: CborNode): ?!T =
   when T is CborNode:
     return success T(n)
 
   expectCborKind(T, {cborMap}, n)
 
-  var res =
-    when type(T) is ref:
-      T.new()
-    else:
-      T.default
+  var res = T.default
 
+  let mode = getSerdeMode(T, deserialize)
   try:
     var
       i: int
@@ -772,3 +781,8 @@ proc fromCbor*[T: ref object or object](_: type T; n: CborNode): ?!T =
     return failure newCborError(e.msg)
   except Exception as e:
     raise newException(Defect, e.msg, e)
+
+proc fromCbor*[T: ref object or object](_: type T; str: string): ?!T =
+  var n = ?parseCbor(str)
+  T.fromCbor(n)
+
