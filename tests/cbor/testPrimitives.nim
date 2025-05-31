@@ -49,7 +49,7 @@ suite "roundtrip":
         controlCbor = base64.decode controlB64
         name = v["name"].getStr
       test name:
-        without testCbor =? encode(parseCbor(controlCbor)), error:
+        without testCbor =? toCbor(parseCbor(controlCbor)), error:
           fail()
         if controlCbor != testCbor:
           let testB64 = base64.encode(testCbor)
@@ -59,16 +59,16 @@ suite "hooks":
   test "DateTime":
     let dt = now()
 
-    without bin =? encode(dt), error:
+    without bin =? toCbor(dt), error:
       fail()
     check(parseCbor(bin).text == $dt)
   test "Time":
     let t = now().toTime
-    var bin = encode(t).tryValue
+    var bin = toCbor(t).tryValue
     check(parseCbor(bin).getInt == t.toUnix)
 
 test "tag":
-  var c = toCbor("foo").tryValue
+  var c = toCborNode("foo").tryValue
   c.tag = some(99'u64)
   check c.tag == some(99'u64)
 
@@ -76,19 +76,19 @@ test "sorting":
   var map = initCborMap()
   var keys =
     @[
-      toCbor(10).tryValue,
-      toCbor(100).tryValue,
-      toCbor(-1).tryValue,
-      toCbor("z").tryValue,
-      toCbor("aa").tryValue,
-      toCbor([toCbor(100).tryValue]).tryValue,
-      toCbor([toCbor(-1).tryValue]).tryValue,
-      toCbor(false).tryValue,
+      toCborNode(10).tryValue,
+      toCborNode(100).tryValue,
+      toCborNode(-1).tryValue,
+      toCborNode("z").tryValue,
+      toCborNode("aa").tryValue,
+      toCborNode([toCborNode(100).tryValue]).tryValue,
+      toCborNode([toCborNode(-1).tryValue]).tryValue,
+      toCborNode(false).tryValue,
     ]
   shuffle(keys)
 
   for k in keys:
-    map[k] = toCbor(0).tryValue
+    map[k] = toCborNode(0).tryValue
   check not map.isSorted.tryValue
   check sort(map).isSuccess
   check map.isSorted.tryValue
