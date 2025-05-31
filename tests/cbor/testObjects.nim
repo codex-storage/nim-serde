@@ -48,22 +48,22 @@ type
 
   # Complex object with various field types to test comprehensive serialization
   CompositeNested = object
-    u: uint64 # Unsigned integer
-    n: int # Signed integer
-    b: seq[byte] # Byte sequence
-    t: string # Text string
-    arr: seq[int] # Integer sequence
-    tag: float # Floating point
-    flag: bool # Boolean
-    inner: Inner # Nested object
-    innerArr: seq[Inner] # Sequence of objects
+    u: uint64                                         # Unsigned integer
+    n: int                                            # Signed integer
+    b: seq[byte]                                      # Byte sequence
+    t: string                                         # Text string
+    arr: seq[int]                                     # Integer sequence
+    tag: float                                        # Floating point
+    flag: bool                                        # Boolean
+    inner: Inner                                      # Nested object
+    innerArr: seq[Inner]                              # Sequence of objects
     coordinates: tuple[x: int, y: int, label: string] # Tuple
-    refInner: ref Inner # Reference to object
-    refNewInner: NewType # Custom reference type
-    refNil: ref Inner # Nil reference
-    customPoint: CustomPoint # Custom type
-    time: Time # Time
-    date: DateTime # DateTime
+    refInner: ref Inner                               # Reference to object
+    refNewInner: NewType                              # Custom reference type
+    refNil: ref Inner                                 # Nil reference
+    customPoint: CustomPoint                          # Custom type
+    time: Time                                        # Time
+    date: DateTime                                    # DateTime
 
 # Custom deserialization for CustomColor enum
 # Converts a CBOR negative integer to a CustomColor enum value
@@ -107,7 +107,8 @@ proc createPointCbor(x, y: int): CborNode =
     ]
 
 # Creates a CBOR map node representing a CustomObject
-proc createObjectCbor(name: string, point: CustomPoint, color: CustomColor): CborNode =
+proc createObjectCbor(name: string, point: CustomPoint,
+    color: CustomColor): CborNode =
   result = CborNode(kind: cborMap)
   result.map = initOrderedTable[CborNode, CborNode]()
 
@@ -156,29 +157,29 @@ suite "CBOR deserialization":
 
     # 2. Create a complex object with all supported types
     var original = CompositeNested(
-      u: 42, # unsigned integer
-      n: -99, # signed integer
-      b: @[byte 1, byte 2], # byte array
-      t: "hi", # string
-      arr: @[1, 2, 3], # integer array
-      tag: 1.5, # float
-      flag: true, # boolean
-      inner: Inner(s: "inner!", nums: @[10, 20]), # nested object
+      u: 42,                                                # unsigned integer
+      n: -99,                                               # signed integer
+      b: @[byte 1, byte 2],                                 # byte array
+      t: "hi",                                              # string
+      arr: @[1, 2, 3],                                      # integer array
+      tag: 1.5,                                             # float
+      flag: true,                                           # boolean
+      inner: Inner(s: "inner!", nums: @[10, 20]),           # nested object
       innerArr:
-        @[ # array of objects
+        @[                                                  # array of objects
           Inner(s: "first", nums: @[1, 2]), Inner(s: "second", nums: @[3, 4, 5])
         ],
-      coordinates: (x: 10, y: 20, label: "test"), # tuple
-      refInner: refInner, # reference to object
-      refNewInner: refNewObj, # custom reference type
-      refNil: nil, # nil reference
-      customPoint: CustomPoint(x: 15, y: 25), # custom type
-      time: getTime(), # time
-      date: now().utc, # date
+      coordinates: (x: 10, y: 20, label: "test"),           # tuple
+      refInner: refInner,                                   # reference to object
+      refNewInner: refNewObj,                               # custom reference type
+      refNil: nil,                                          # nil reference
+      customPoint: CustomPoint(x: 15, y: 25),               # custom type
+      time: getTime(),                                      # time
+      date: now().utc,                                      # date
     )
 
     # Test serialization using encode helper
-    without encodedStr =? encode(original), error:
+    without encodedStr =? toCbor(original), error:
       fail()
 
     # Test serialization using stream API

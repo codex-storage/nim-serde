@@ -58,20 +58,20 @@ proc writeInitial[T: SomeInteger](str: Stream, m: uint8, n: T): ?!void =
         str.write(n.uint8)
       elif uint64(n) <= uint64(uint16.high):
         str.write(m or 25'u8)
-        str.write((uint8) n shr 8)
-        str.write((uint8) n)
+        str.write((uint8)n shr 8)
+        str.write((uint8)n)
       elif uint64(n) <= uint64(uint32.high):
         str.write(m or 26'u8)
         for i in countdown(24, 8, 8):
           {.unroll.}
-          str.write((uint8) n shr i)
-        str.write((uint8) n)
+          str.write((uint8)n shr i)
+        str.write((uint8)n)
       else:
         str.write(m or 27'u8)
         for i in countdown(56, 8, 8):
           {.unroll.}
-          str.write((uint8) n shr i)
-        str.write((uint8) n)
+          str.write((uint8)n shr i)
+        str.write((uint8)n)
       success()
   except IOError as e:
     return failure(e.msg)
@@ -198,20 +198,20 @@ proc writeCbor*[T: SomeFloat](str: Stream, v: T): ?!void =
       return success()
     of fcZero:
       str.write initialByte(7, 25)
-      str.write((char) 0x00)
+      str.write((char)0x00)
     of fcNegZero:
       str.write initialByte(7, 25)
-      str.write((char) 0x80)
+      str.write((char)0x80)
     of fcInf:
       str.write initialByte(7, 25)
-      str.write((char) 0x7c)
+      str.write((char)0x7c)
     of fcNan:
       str.write initialByte(7, 25)
-      str.write((char) 0x7e)
+      str.write((char)0x7e)
     of fcNegInf:
       str.write initialByte(7, 25)
-      str.write((char) 0xfc)
-    str.write((char) 0x00)
+      str.write((char)0xfc)
+    str.write((char)0x00)
     success()
   except IOError as io:
     return failure(io.msg)
@@ -273,16 +273,16 @@ proc writeCbor*[T: object](str: Stream, v: T): ?!void =
     ?str.writeCbor(f)
   success()
 
-proc writeCborArray*(str: Stream, args: varargs[CborNode, toCbor]): ?!void =
+proc writeCborArray*(str: Stream, args: varargs[CborNode, toCborNode]): ?!void =
   ## Encode to a CBOR array in binary form. This magic doesn't
   ## always work, some arguments may need to be explicitly
-  ## converted with ``toCbor`` before passing.
+  ## converted with ``toCborNode`` before passing.
   ?str.writeCborArrayLen(args.len)
   for x in args:
     ?str.writeCbor(x)
   success()
 
-proc encode*[T](v: T): ?!string =
+proc toCbor*[T](v: T): ?!string =
   ## Encode an arbitrary value to CBOR binary representation.
   ## A wrapper over ``writeCbor``.
   let s = newStringStream()
@@ -296,7 +296,7 @@ proc toRaw*(n: CborNode): ?!CborNode =
   if n.kind == cborRaw:
     return success(n)
   else:
-    without res =? encode(n), error:
+    without res =? toCbor(n), error:
       return failure(error)
     return success(CborNode(kind: cborRaw, raw: res))
 
@@ -345,25 +345,25 @@ proc writeCbor*(str: Stream, t: Time): ?!void =
   ?writeCbor(str, t.toUnix)
   success()
 
-func toCbor*(x: CborNode): ?!CborNode =
+func toCborNode*(x: CborNode): ?!CborNode =
   success(x)
 
-func toCbor*(x: SomeInteger): ?!CborNode =
+func toCborNode*(x: SomeInteger): ?!CborNode =
   if x > 0:
     success(CborNode(kind: cborUnsigned, uint: x.uint64))
   else:
     success(CborNode(kind: cborNegative, int: x.int64))
 
-func toCbor*(x: openArray[byte]): ?!CborNode =
+func toCborNode*(x: openArray[byte]): ?!CborNode =
   success(CborNode(kind: cborBytes, bytes: @x))
 
-func toCbor*(x: string): ?!CborNode =
+func toCborNode*(x: string): ?!CborNode =
   success(CborNode(kind: cborText, text: x))
 
-func toCbor*(x: openArray[CborNode]): ?!CborNode =
+func toCborNode*(x: openArray[CborNode]): ?!CborNode =
   success(CborNode(kind: cborArray, seq: @x))
 
-func toCbor*(pairs: openArray[(CborNode, CborNode)]): ?!CborNode =
+func toCborNode*(pairs: openArray[(CborNode, CborNode)]): ?!CborNode =
   try:
     return success(CborNode(kind: cborMap, map: pairs.toOrderedTable))
   except CatchableError as e:
@@ -371,24 +371,24 @@ func toCbor*(pairs: openArray[(CborNode, CborNode)]): ?!CborNode =
   except Exception as e:
     raise newException(Defect, e.msg, e)
 
-func toCbor*(tag: uint64, val: CborNode): ?!CborNode =
-  without res =? toCbor(val), error:
+func toCborNode*(tag: uint64, val: CborNode): ?!CborNode =
+  without res =? toCborNode(val), error:
     return failure(error.msg)
   var cnode = res
   cnode.tag = some(tag)
   return success(cnode)
 
-func toCbor*(x: bool): ?!CborNode =
+func toCborNode*(x: bool): ?!CborNode =
   case x
   of false:
     success(CborNode(kind: cborSimple, simple: 20))
   of true:
     success(CborNode(kind: cborSimple, simple: 21))
 
-func toCbor*(x: SomeFloat): ?!CborNode =
+func toCborNode*(x: SomeFloat): ?!CborNode =
   success(CborNode(kind: cborFloat, float: x.float64))
 
-func toCbor*(x: pointer): ?!CborNode =
+func toCborNode*(x: pointer): ?!CborNode =
   ## A hack to produce a CBOR null item.
   if not x.isNil:
     return failure("pointer is not nil")
@@ -398,7 +398,7 @@ func initCborBytes*[T: char | byte](buf: openArray[T]): CborNode =
   ## Create a CBOR byte string from `buf`.
   result = CborNode(kind: cborBytes, bytes: newSeq[byte](buf.len))
   for i in 0 ..< buf.len:
-    result.bytes[i] = (byte) buf[i]
+    result.bytes[i] = (byte)buf[i]
 
 func initCborBytes*(len: int): CborNode =
   ## Create a CBOR byte string of ``len`` bytes.
@@ -421,6 +421,6 @@ func initCborMap*(initialSize = tables.defaultInitialSize): CborNode =
   ## Initialize a CBOR map.
   CborNode(kind: cborMap, map: initOrderedTable[CborNode, CborNode](initialSize))
 
-func initCbor*(items: varargs[CborNode, toCbor]): CborNode =
+func initCbor*(items: varargs[CborNode, toCborNode]): CborNode =
   ## Initialize a CBOR arrary.
   CborNode(kind: cborArray, seq: @items)

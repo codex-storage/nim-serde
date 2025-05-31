@@ -13,14 +13,14 @@ type Inner {.serialize.} = object
   size: uint64
 
 type CustomPoint {.serialize.} = object
-  u: uint64 # Unsigned integer
-  n: int # Signed integer
-  b: seq[byte] # Byte sequence
-  t: string # Text string
-  arr: seq[int] # Integer sequence
-  tag: float # Floating point
-  flag: bool # Boolean
-  inner: Inner # Nested object
+  u: uint64            # Unsigned integer
+  n: int               # Signed integer
+  b: seq[byte]         # Byte sequence
+  t: string            # Text string
+  arr: seq[int]        # Integer sequence
+  tag: float           # Floating point
+  flag: bool           # Boolean
+  inner: Inner         # Nested object
   innerArr: seq[Inner] # Sequence of objects
 
 proc generateCustomPoint(): CustomPoint =
@@ -49,7 +49,7 @@ proc benchmark(): void =
 
   let cborStartTime = cpuTime()
   for i in 1 .. 100000:
-    cborStr = encode(point).tryValue
+    cborStr = toCbor(point).tryValue
   let cborEndTime = cpuTime()
   let cborDuration = cborEndTime - cborStartTime
 
