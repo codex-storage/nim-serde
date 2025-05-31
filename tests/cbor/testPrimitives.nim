@@ -6,11 +6,12 @@ import pkg/serde/cbor
 import pkg/questionable
 import pkg/questionable/results
 
-proc findVectorsFile: string =
+proc findVectorsFile(): string =
   var parent = getCurrentDir()
   while parent != "/":
     result = parent / "tests" / "cbor" / "test_vector.json"
-    if fileExists result: return
+    if fileExists result:
+      return
     parent = parent.parentDir
   raiseAssert "Could not find test vectors"
 
@@ -23,11 +24,8 @@ suite "decode":
         control = $v["decoded"]
         name = v["name"].getStr
       test name:
-        let
-          controlCbor = base64.decode v["cbor"].getStr
-        without c =? parseCbor(controlCbor), error:
-          fail()
-        let js = c.toJson()
+        let controlCbor = base64.decode v["cbor"].getStr
+        let js = parseCbor(controlCbor).toJson()
         if js.isNil:
           fail()
         else:
@@ -40,11 +38,8 @@ suite "diagnostic":
         control = v["diagnostic"].getStr
         name = v["name"].getStr
       test name:
-        let
-          controlCbor = base64.decode v["cbor"].getStr
-        without c =? parseCbor(controlCbor), error:
-          fail()
-        check($c == control)
+        let controlCbor = base64.decode v["cbor"].getStr
+        check($parseCbor(controlCbor) == control)
 
 suite "roundtrip":
   for v in js.items:
@@ -53,10 +48,8 @@ suite "roundtrip":
         controlB64 = v["cbor"].getStr
         controlCbor = base64.decode controlB64
         name = v["name"].getStr
-      without c =? parseCbor(controlCbor), error:
-        fail()
       test name:
-        without testCbor =? encode(c), error:
+        without testCbor =? encode(parseCbor(controlCbor)), error:
           fail()
         if controlCbor != testCbor:
           let testB64 = base64.encode(testCbor)
@@ -68,17 +61,11 @@ suite "hooks":
 
     without bin =? encode(dt), error:
       fail()
-    without node =? parseCbor(bin), error:
-      fail()
-    check(node.text == $dt)
+    check(parseCbor(bin).text == $dt)
   test "Time":
     let t = now().toTime
-    var
-      bin = encode(t).tryValue
-    without node =? parseCbor(bin), error:
-      fail()
-
-    check(node.getInt == t.toUnix)
+    var bin = encode(t).tryValue
+    check(parseCbor(bin).getInt == t.toUnix)
 
 test "tag":
   var c = toCbor("foo").tryValue
@@ -87,7 +74,8 @@ test "tag":
 
 test "sorting":
   var map = initCborMap()
-  var keys = @[
+  var keys =
+    @[
       toCbor(10).tryValue,
       toCbor(100).tryValue,
       toCbor(-1).tryValue,
@@ -99,7 +87,8 @@ test "sorting":
     ]
   shuffle(keys)
 
-  for k in keys: map[k] = toCbor(0).tryValue
+  for k in keys:
+    map[k] = toCbor(0).tryValue
   check not map.isSorted.tryValue
   check sort(map).isSuccess
   check map.isSorted.tryValue
@@ -109,4 +98,5 @@ test "invalid wire type":
   let result = int.fromCbor(node)
 
   check result.isFailure
-  check $result.error.msg == "deserialization to int failed: expected {cborUnsigned, cborNegative} but got cborText"
+  check $result.error.msg ==
+    "deserialization to int failed: expected {cborUnsigned, cborNegative} but got cborText"

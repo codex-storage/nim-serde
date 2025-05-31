@@ -10,8 +10,7 @@ proc newUnexpectedKindError*(
 ): ref UnexpectedKindError =
   newException(
     UnexpectedKindError,
-    "deserialization to " & $expectedType & " failed: expected " &
-    expectedKinds &
+    "deserialization to " & $expectedType & " failed: expected " & expectedKinds &
       " but got " & $cbor.kind,
   )
 
@@ -37,3 +36,7 @@ proc newUnexpectedKindError*(
 
 proc newCborError*(msg: string): ref CborParseError =
   newException(CborParseError, msg)
+
+proc parseAssert*(check: bool, msg = "") {.inline.} =
+  if not check:
+    raise newException(CborParseError, msg)

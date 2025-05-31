@@ -32,7 +32,6 @@ export types
 logScope:
   topics = "nimserde json deserializer"
 
-
 proc fromJson*(T: type enum, json: JsonNode): ?!T =
   expectJsonKind(string, JString, json)
   without val =? parseEnum[T](json.str).catch, error:
@@ -105,8 +104,7 @@ proc fromJson*(_: type seq[byte], json: JsonNode): ?!seq[byte] =
   expectJsonKind(seq[byte], JString, json)
   hexToSeqByte(json.getStr).catch
 
-proc fromJson*[N: static[int], T: array[N, byte]](_: type T,
-    json: JsonNode): ?!T =
+proc fromJson*[N: static[int], T: array[N, byte]](_: type T, json: JsonNode): ?!T =
   expectJsonKind(T, JString, json)
   T.fromHex(json.getStr).catch
 
@@ -141,8 +139,7 @@ proc fromJson*(T: typedesc[StUint or StInt], json: JsonNode): ?!T =
       catch parse(jsonStr, T)
 
 proc fromJson*[T](_: type Option[T], json: JsonNode): ?!Option[T] =
-  if json.isNil or json.kind == JNull or json.isEmptyString or
-      json.isNullString:
+  if json.isNil or json.kind == JNull or json.isEmptyString or json.isNullString:
     return success(none T)
   without val =? T.fromJson(json), error:
     return failure(error)
@@ -225,8 +222,7 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
         value = parsed
 
       # not Option[T]
-      elif opts.key in json and jsonVal =? json{opts.key}.catch and
-          not jsonVal.isNil:
+      elif opts.key in json and jsonVal =? json{opts.key}.catch and not jsonVal.isNil:
         without parsed =? typeof(value).fromJson(jsonVal), e:
           trace "failed to deserialize field",
             `type` = $typeof(value), json = jsonVal, error = e.msg
@@ -278,7 +274,9 @@ proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool or enum](
     success newSeq[T]()
   else:
     if T is enum:
-      let err = newSerdeError("Cannot deserialize a seq[enum]: not yet implemented, PRs welcome")
+      let err = newSerdeError(
+        "Cannot deserialize a seq[enum]: not yet implemented, PRs welcome"
+      )
       return failure err
 
     let jsn = ?JsonNode.parse(json)
@@ -291,7 +289,9 @@ proc fromJson*[T: SomeInteger or SomeFloat or openArray[byte] or bool or enum](
     success seq[T].none
   else:
     if T is enum:
-      let err = newSerdeError("Cannot deserialize a seq[enum]: not yet implemented, PRs welcome")
+      let err = newSerdeError(
+        "Cannot deserialize a seq[enum]: not yet implemented, PRs welcome"
+      )
       return failure err
     let jsn = ?JsonNode.parse(json)
     Option[seq[T]].fromJson(jsn)

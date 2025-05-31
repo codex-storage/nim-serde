@@ -2,7 +2,6 @@ import ./stdjson
 import ../utils/types
 import std/sets
 
-
 proc newUnexpectedKindError*(
     expectedType: type, expectedKinds: string, json: JsonNode
 ): ref UnexpectedKindError =

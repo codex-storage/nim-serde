@@ -8,8 +8,9 @@ template expectJsonKind*(
   if json.isNil or json.kind notin expectedKinds:
     return failure(newUnexpectedKindError(expectedType, expectedKinds, json))
 
-template expectJsonKind*(expectedType: type, expectedKind: JsonNodeKind,
-    json: JsonNode) =
+template expectJsonKind*(
+    expectedType: type, expectedKind: JsonNodeKind, json: JsonNode
+) =
   expectJsonKind(expectedType, {expectedKind}, json)
 
 proc fieldKeys*[T](obj: T): seq[string] =
@@ -25,7 +26,6 @@ func keysNotIn*[T](json: JsonNode, obj: T): HashSet[string] =
   let jsonKeys = json.keys.toSeq.toHashSet
   let objKeys = obj.fieldKeys.toHashSet
   difference(jsonKeys, objKeys)
-
 
 func isEmptyString*(json: JsonNode): bool =
   return json.kind == JString and json.getStr == ""

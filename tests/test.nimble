@@ -9,4 +9,3 @@ requires "questionable >= 0.10.13 & < 0.11.0"
 task test, "Run the test suite":
   exec "nimble install -d -y"
   exec "nim c -r test"
-  

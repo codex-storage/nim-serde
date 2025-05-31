@@ -24,7 +24,9 @@ type
 
   # Enum type to test enum serialization
   CustomColor = enum
-    Red, Green, Blue
+    Red
+    Green
+    Blue
 
   # Object combining different custom types
   CustomObject = object
@@ -46,22 +48,22 @@ type
 
   # Complex object with various field types to test comprehensive serialization
   CompositeNested = object
-    u: uint64                                         # Unsigned integer
-    n: int                                            # Signed integer
-    b: seq[byte]                                      # Byte sequence
-    t: string                                         # Text string
-    arr: seq[int]                                     # Integer sequence
-    tag: float                                        # Floating point
-    flag: bool                                        # Boolean
-    inner: Inner                                      # Nested object
-    innerArr: seq[Inner]                              # Sequence of objects
+    u: uint64 # Unsigned integer
+    n: int # Signed integer
+    b: seq[byte] # Byte sequence
+    t: string # Text string
+    arr: seq[int] # Integer sequence
+    tag: float # Floating point
+    flag: bool # Boolean
+    inner: Inner # Nested object
+    innerArr: seq[Inner] # Sequence of objects
     coordinates: tuple[x: int, y: int, label: string] # Tuple
-    refInner: ref Inner                               # Reference to object
-    refNewInner: NewType                              # Custom reference type
-    refNil: ref Inner                                 # Nil reference
-    customPoint: CustomPoint                          # Custom type
-    time: Time                                        # Time
-    date: DateTime                                    # DateTime
+    refInner: ref Inner # Reference to object
+    refNewInner: NewType # Custom reference type
+    refNil: ref Inner # Nil reference
+    customPoint: CustomPoint # Custom type
+    time: Time # Time
+    date: DateTime # DateTime
 
 # Custom deserialization for CustomColor enum
 # Converts a CBOR negative integer to a CustomColor enum value
@@ -98,14 +100,14 @@ proc writeCbor*(str: Stream, val: CustomPoint): ?!void =
 # Helper function to create CBOR data for testing
 proc createPointCbor(x, y: int): CborNode =
   result = CborNode(kind: cborArray)
-  result.seq = @[
-    CborNode(kind: cborUnsigned, uint: x.uint64),
-    CborNode(kind: cborUnsigned, uint: y.uint64)
-  ]
+  result.seq =
+    @[
+      CborNode(kind: cborUnsigned, uint: x.uint64),
+      CborNode(kind: cborUnsigned, uint: y.uint64),
+    ]
 
 # Creates a CBOR map node representing a CustomObject
-proc createObjectCbor(name: string, point: CustomPoint,
-    color: CustomColor): CborNode =
+proc createObjectCbor(name: string, point: CustomPoint, color: CustomColor): CborNode =
   result = CborNode(kind: cborMap)
   result.map = initOrderedTable[CborNode, CborNode]()
 
@@ -122,7 +124,6 @@ proc createObjectCbor(name: string, point: CustomPoint,
     CborNode(kind: cborNegative, int: color.int)
 
 suite "CBOR deserialization":
-
   test "deserializes object with custom types":
     # Create a test point
     let point = CustomPoint(x: 15, y: 25)
@@ -143,7 +144,6 @@ suite "CBOR deserialization":
     check deserializedObj.point.y == 25
     check deserializedObj.color == Green
 
-
   test "serialize and deserialize object with all supported wire types":
     # Setup test data with various types
     # 1. Create reference objects
@@ -156,25 +156,25 @@ suite "CBOR deserialization":
 
     # 2. Create a complex object with all supported types
     var original = CompositeNested(
-      u: 42,                                                # unsigned integer
-      n: -99,                                               # signed integer
-      b: @[byte 1, byte 2],                                 # byte array
-      t: "hi",                                              # string
-      arr: @[1, 2, 3],                                      # integer array
-      tag: 1.5,                                             # float
-      flag: true,                                           # boolean
-      inner: Inner(s: "inner!", nums: @[10, 20]),           # nested object
-      innerArr: @[                                          # array of objects
-        Inner(s: "first", nums: @[1, 2]),
-        Inner(s: "second", nums: @[3, 4, 5])
-      ],
-      coordinates: (x: 10, y: 20, label: "test"),           # tuple
-      refInner: refInner,                                   # reference to object
-      refNewInner: refNewObj,                               # custom reference type
-      refNil: nil,                                          # nil reference
-      customPoint: CustomPoint(x: 15, y: 25),               # custom type
-      time: getTime(),                                      # time
-      date: now().utc                                       # date
+      u: 42, # unsigned integer
+      n: -99, # signed integer
+      b: @[byte 1, byte 2], # byte array
+      t: "hi", # string
+      arr: @[1, 2, 3], # integer array
+      tag: 1.5, # float
+      flag: true, # boolean
+      inner: Inner(s: "inner!", nums: @[10, 20]), # nested object
+      innerArr:
+        @[ # array of objects
+          Inner(s: "first", nums: @[1, 2]), Inner(s: "second", nums: @[3, 4, 5])
+        ],
+      coordinates: (x: 10, y: 20, label: "test"), # tuple
+      refInner: refInner, # reference to object
+      refNewInner: refNewObj, # custom reference type
+      refNil: nil, # nil reference
+      customPoint: CustomPoint(x: 15, y: 25), # custom type
+      time: getTime(), # time
+      date: now().utc, # date
     )
 
     # Test serialization using encode helper
@@ -192,9 +192,7 @@ suite "CBOR deserialization":
     check cborData == encodedStr
 
     # Parse CBOR data back to CborNode
-    let parseResult = parseCbor(cborData)
-    check parseResult.isSuccess
-    let node = parseResult.tryValue
+    let node = parseCbor(cborData)
 
     # Deserialize CborNode to CompositeNested object
     let res = CompositeNested.fromCbor(node)
@@ -218,7 +216,7 @@ suite "CBOR deserialization":
 
     # 3. Check sequence of objects
     check roundtrip.innerArr.len == original.innerArr.len
-    for i in 0..<roundtrip.innerArr.len:
+    for i in 0 ..< roundtrip.innerArr.len:
       check roundtrip.innerArr[i].s == original.innerArr[i].s
       check roundtrip.innerArr[i].nums == original.innerArr[i].nums
 
@@ -238,4 +236,3 @@ suite "CBOR deserialization":
     # 7. Check custom type
     check roundtrip.customPoint.x == original.customPoint.x
     check roundtrip.customPoint.y == original.customPoint.y
-

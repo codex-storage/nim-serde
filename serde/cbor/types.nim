@@ -20,16 +20,16 @@ const
 type
   CborEventKind* {.pure.} = enum
     ## enumeration of events that may occur while parsing
-    cborEof,
-    cborPositive,
-    cborNegative,
-    cborBytes,
-    cborText,
-    cborArray,
-    cborMap,
-    cborTag,
-    cborSimple,
-    cborFloat,
+    cborEof
+    cborPositive
+    cborNegative
+    cborBytes
+    cborText
+    cborArray
+    cborMap
+    cborTag
+    cborSimple
+    cborFloat
     cborBreak
 
   CborParser* = object ## CBOR parser state.
@@ -40,15 +40,15 @@ type
 
 type
   CborNodeKind* = enum
-    cborUnsigned = 0,
-    cborNegative = 1,
-    cborBytes = 2,
-    cborText = 3,
-    cborArray = 4,
-    cborMap = 5,
-    cborTag = 6,
-    cborSimple = 7,
-    cborFloat,
+    cborUnsigned = 0
+    cborNegative = 1
+    cborBytes = 2
+    cborText = 3
+    cborArray = 4
+    cborMap = 5
+    cborTag = 6
+    cborSimple = 7
+    cborFloat
     cborRaw
 
   CborNode* = object
@@ -106,7 +106,7 @@ func `==`*(x, y: CborNode): bool =
   else:
     false
 
-func `==`*(x: CborNode; y: SomeInteger): bool =
+func `==`*(x: CborNode, y: SomeInteger): bool =
   case x.kind
   of cborUnsigned:
     x.uint == y
@@ -115,11 +115,12 @@ func `==`*(x: CborNode; y: SomeInteger): bool =
   else:
     false
 
-func `==`*(x: CborNode; y: string): bool =
+func `==`*(x: CborNode, y: string): bool =
   x.kind == cborText and x.text == y
 
-func `==`*(x: CborNode; y: SomeFloat): bool =
-  if x.kind == cborFloat: x.float == y
+func `==`*(x: CborNode, y: SomeFloat): bool =
+  if x.kind == cborFloat:
+    x.float == y
 
 func hash(x: CborNode): Hash =
   var h = hash(get(x.tag, 0))
@@ -151,11 +152,11 @@ func hash(x: CborNode): Hash =
     h = x.raw.hash
   !$h
 
-proc `[]`*(n, k: CborNode): CborNode = n.map[k]
-  ## Retrieve a value from a CBOR map.
+proc `[]`*(n, k: CborNode): CborNode = ## Retrieve a value from a CBOR map.
+  n.map[k]
 
-proc `[]=`*(n: var CborNode; k, v: sink CborNode) = n.map[k] = v
-  ## Assign a pair in a CBOR map.
+proc `[]=`*(n: var CborNode, k, v: sink CborNode) = ## Assign a pair in a CBOR map.
+  n.map[k] = v
 
 func len*(node: CborNode): int =
   ## Return the logical length of a ``CborNode``, that is the
