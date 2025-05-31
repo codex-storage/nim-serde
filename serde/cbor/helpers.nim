@@ -27,6 +27,15 @@ template expectCborKind*(
 ) =
   expectCborKind(expectedType, {expectedKind}, cbor)
 
+template parseAssert*(check: bool, msg = "") =
+  if not check:
+    raise newException(CborParseError, msg)
+
+template assertNoPragma*(value, pragma, msg) =
+  static:
+    when value.hasCustomPragma(pragma):
+      raiseAssert(msg)
+
 macro dot*(obj: object, fld: string): untyped =
   ## Turn ``obj.dot("fld")`` into ``obj.fld``.
   newDotExpr(obj, newIdentNode(fld.strVal))

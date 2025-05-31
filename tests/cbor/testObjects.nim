@@ -43,9 +43,6 @@ type
   NewType = ref object
     size: uint64
 
-  # Reference type for Inner object
-  InnerRef = ref Inner
-
   # Complex object with various field types to test comprehensive serialization
   CompositeNested = object
     u: uint64                                         # Unsigned integer

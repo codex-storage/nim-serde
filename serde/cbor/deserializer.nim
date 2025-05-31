@@ -607,10 +607,11 @@ proc fromCbor*[T: object](_: type T, n: CborNode): ?!T =
     return success T(n)
 
   expectCborKind(T, {cborMap}, n)
-
   var res = T.default
 
-  let mode = getSerdeMode(T, deserialize)
+  # Added because serde {serialize, deserialize} pragmas and options are not supported cbor
+  assertNoPragma(T, deserialize, "deserialize pragma not supported")
+
   try:
     var
       i: int
@@ -621,6 +622,8 @@ proc fromCbor*[T: object](_: type T, n: CborNode): ?!T =
       else:
         res
     ):
+      assertNoPragma(value, deserialize, "deserialize pragma not supported")
+
       key.text = name
 
       if not n.map.hasKey key:

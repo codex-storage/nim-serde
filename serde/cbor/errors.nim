@@ -36,7 +36,3 @@ proc newUnexpectedKindError*(
 
 proc newCborError*(msg: string): ref CborParseError =
   newException(CborParseError, msg)
-
-template parseAssert*(check: bool, msg = "") =
-  if not check:
-    raise newException(CborParseError, msg)

@@ -5,7 +5,9 @@ import std/[streams, options, tables, typetraits, math, endians, times]
 import pkg/questionable
 import pkg/questionable/results
 import ../utils/errors
+import ../utils/pragmas
 import ./types
+import ./helpers
 
 {.push raises: [].}
 
@@ -265,10 +267,15 @@ proc writeCbor*(str: Stream, v: CborNode): ?!void =
 
 proc writeCbor*[T: object](str: Stream, v: T): ?!void =
   var n: uint
+  # Added because serde {serialize, deserialize} pragma and options are not supported cbor
+  assertNoPragma(T, serialize, "serialize pragma not supported")
+
   for _, _ in v.fieldPairs:
     inc n
   ?str.writeInitial(5, n)
+
   for k, f in v.fieldPairs:
+    assertNoPragma(f, serialize, "serialize pragma not supported")
     ?str.writeCbor(k)
     ?str.writeCbor(f)
   success()
