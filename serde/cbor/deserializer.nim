@@ -160,8 +160,7 @@ func textLen*(c: CborParser): int {.raises: [CborParseError].} =
   parseAssert(c.kind == CborEventKind.cborText, "Expected text, got " & $c.kind)
   c.intVal.int
 
-proc nextText*(c: var CborParser, buf: var string) {.raises: [
-    CborParseError].} =
+proc nextText*(c: var CborParser, buf: var string) {.raises: [CborParseError].} =
   ## Read the text that the parser is positioned on into a string and advance.
   try:
     parseAssert(c.kind == CborEventKind.cborText, "Expected text, got " & $c.kind)
@@ -200,8 +199,7 @@ proc skipNode*(c: var CborParser) {.raises: [CborParseError].} =
     case c.kind
     of CborEventKind.cborEof:
       raise newCborError("end of CBOR stream")
-    of CborEventKind.cborPositive, CborEventKind.cborNegative,
-        CborEventKind.cborSimple:
+    of CborEventKind.cborPositive, CborEventKind.cborNegative, CborEventKind.cborSimple:
       c.next()
     of CborEventKind.cborBytes, CborEventKind.cborText:
       if c.isIndefinite:
@@ -312,8 +310,7 @@ proc nextNode*(c: var CborParser): CborNode {.raises: [CborParseError].} =
     of CborEventKind.cborMap:
       let mapLen = c.intVal.int
       result = CborNode(
-        kind: cborMap, map: initOrderedTable[CborNode, CborNode](
-            mapLen.nextPowerOfTwo)
+        kind: cborMap, map: initOrderedTable[CborNode, CborNode](mapLen.nextPowerOfTwo)
       )
       if c.isIndefinite:
         c.next()
@@ -486,7 +483,7 @@ func isTagged*(n: CborNode): bool =
 
 func hasTag*(n: CborNode, tag: Natural): bool =
   ## Check if a CBOR item has a tag.
-  n.tag.isSome and n.tag.get == (uint64)tag
+  n.tag.isSome and n.tag.get == (uint64) tag
 
 proc `tag=`*(result: var CborNode, tag: Natural) =
   ## Tag a CBOR item.
