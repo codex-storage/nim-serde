@@ -609,7 +609,7 @@ proc fromCbor*[T: object](_: type T, n: CborNode): ?!T =
   expectCborKind(T, {cborMap}, n)
   var res = T.default
 
-  # Added because serde {serialize, deserialize} pragmas and options are not supported cbor
+  # Added because serde {serialize, deserialize} pragmas and options are not supported for cbor
   assertNoPragma(T, deserialize, "deserialize pragma not supported")
 
   try:

@@ -1,102 +1,13 @@
 # nim-serde
 
-Easy-to-use json serialization capabilities, and a drop-in replacement for `std/json`.
+A serialization and deserialization library for Nim supporting multiple wire formats.
 
-## Quick examples
+## Supported Wire Formats
 
-Opt-in serialization by default:
+nim-serde currently supports the following wire formats:
 
-```nim
-import pkg/serde/json
-
-type MyType = object
-  field1 {.serialize.}: bool
-  field2: bool
-
-assert MyType(field1: true, field2: true).toJson == """{"field1":true}"""
-```
-
-Opt-out deserialization by default:
-
-```nim
-import pkg/serde/json
-
-# All fields deserialized, as none are ignored
-type MyType1 = object
-  field1: bool
-  field2: bool
-
-let jsn1 = """{
-                "field1": true,
-                "field2": true
-              }"""
-assert !MyType1.fromJson(jsn1) == MyType1(field1: true, field2: true)
-
-# Don't deserialize ignored fields in OptOut mode
-type MyType2 = object
-  field1 {.deserialize(ignore=true).}: bool
-  field2: bool
-
-let jsn2 = """{
-                "field1": true,
-                "field2": true,
-                "extra": "extra fields don't error in OptOut mode"
-              }"""
-assert !MyType2.fromJson(jsn2) == MyType2(field1: false, field2: true)
-
-# Note, the ! operator is part of https://github.com/codex-storage/questionable, which retrieves a value if set
-```
-
-Serialize all fields of a type (OptOut mode):
-
-```nim
-import pkg/serde/json
-
-type MyType {.serialize.} = object
-  field1: int
-  field2: int
-
-assert MyType(field1: 1, field2: 2).toJson == """{"field1":1,"field2":2}"""
-```
-
-Alias field names in both directions!
-
-```nim
-import pkg/serde/json
-
-type MyType {.serialize.} = object
-  field1 {.serialize("othername"),deserialize("takesprecedence").}: int
-  field2: int
-
-assert MyType(field1: 1, field2: 2).toJson == """{"othername":1,"field2":2}"""
-let jsn = """{
-                "othername":       1,
-                "field2":          2,
-                "takesprecedence": 3
-              }"""
-assert !MyType.fromJson(jsn) == MyType(field1: 3, field2: 2)
-```
-
-Supports strict mode, where type fields and json fields must match
-
-```nim
-import pkg/serde/json
-
-type MyType {.deserialize(mode=Strict).} = object
-  field1: int
-  field2: int
-
-let jsn = """{
-                "field1": 1,
-                "field2": 2,
-                "extra":  3
-              }"""
-
-let res = MyType.fromJson(jsn)
-assert res.isFailure
-assert res.error of SerdeError
-assert res.error.msg == "json field(s) missing in object: {\"extra\"}"
-```
+- **JSON**: A text-based data interchange format. [See JSON](serde/json/README.md) for details.
+- **CBOR**: A binary data format following RFC 8949. [See CBOR](serde/cbor/README.md) for details.
 
 ## Serde modes
 
@@ -215,198 +126,20 @@ Specifying `ignore`, will prevent de/serialization on the field.
 | `ignore` | <li>**OptOut:** field not serialized</li><li>**OptIn:** field not serialized</li><li>**Strict:** field serialized</li> | <li>**OptOut:** field not deserialized</li><li>**OptIn:** field not deserialized</li><li>**Strict:** field deserialized</li> |
 
 
-## Deserialization
 
-`serde` deserializes using `fromJson`, and in all instances returns `Result[T,
-CatchableError]`, where `T` is the type being deserialized. For example:
 
-```nim
-type MyType = object
- field1: bool
- field2: bool
+## Known Issues
 
-let jsn1 = """{
-               "field1": true,
-               "field2": true
-             }"""
+There is a known issue when using mixins with generic overloaded procs like `fromJson`. At the time of mixin call, only the `fromJson` overloads in scope of the called mixin are available to be dispatched at runtime. There could be other `fromJson` overloads declared in other modules, but are not in scope at the time the mixin was called. 
 
-assert !MyType.fromJson(jsn1) == MyType(field1: true, field2: true)
-```
+Therefore, anytime `fromJson` is called targeting a declared overload, it may or may not be dispatchable. This can be worked around by forcing the `fromJson` overload into scope at compile time. For example, in your application where the `fromJson` overload is defined, at the bottom of the module add:
 
-If there was an error during deserialization, the result of `fromJson` will contain it:
-
-```nim
-import pkg/serde/json
-
-type MyType {.deserialize(mode=Strict).} = object
-  field1: int
-  field2: int
-
-let jsn = """{
-                "field1": 1,
-                "field2": 2,
-                "extra":  3
-              }"""
-
-let res = MyType.fromJson(jsn)
-assert res.isFailure
-assert res.error of SerdeError
-assert res.error.msg == "json field(s) missing in object: {\"extra\"}"
-```
-
-## Custom types
-
-If `serde` can't de/serialize a custom type, de/serialization can be supported by
-overloading `%` and `fromJson`. For example:
-
-```nim
-type
-  Address* = distinct array[20, byte]
-  SerializationError* = object of CatchableError
-
-func `%`*(address: Address): JsonNode =
-  %($address)
-
-func fromJson(_: type Address, json: JsonNode): ?!Address =
-  expectJsonKind(Address, JString, json)
-  without address =? Address.init(json.getStr), error:
-    return failure newException(SerializationError,
-      "Failed to convert '" & $json & "' to Address: " & error.msg)
-  success address
-```
-
-## Serializing to string (`toJson`)
-
-`toJson` is a shortcut for serializing an object into its serialized string
-representation:
-
-```nim
-import pkg/serde/json
-
-type MyType {.serialize.} = object
-  field1: string
-  field2: bool
-
-let mt = MyType(field1: "hw", field2: true)
-assert mt.toJson == """{"field1":"hw","field2":true}"""
-```
-
-This comes in handy, for example, when sending API responses:
-
-```nim
-let availability = getAvailability(...)
-return RestApiResponse.response(availability.toJson,
-                                contentType="application/json")
-```
-
-## `std/json` drop-in replacment
-
-`nim-serde` can be used as a drop-in replacement for the [standard library's `json`
-module](https://nim-lang.org/docs/json.html), with a few notable improvements.
-
-Instead of importing `std/json` into your application, `pkg/serde/json` can be imported
-instead:
-
-```diff
-- import std/json
-+ import pkg/serde/json
-```
-
-As with `std/json`, `%` can be used to serialize a type into a `JsonNode`:
-
-```nim
-import pkg/serde/json
-
-assert %"hello" == newJString("hello")
-```
-
-And `%*` can be used to serialize objects:
-
-```nim
-import pkg/serde/json
-
-let expected = newJObject()
-expected["hello"] = newJString("world")
-assert %*{"hello": "world"} == expected
-```
-
-As well, serialization of types can be overridden, and serialization of custom types can
-be introduced. Here, we are overriding the serialization of `int`:
-
-```nim
-import pkg/serde/json
-
-func `%`(i: int): JsonNode =
-  newJInt(i + 1)
-
-assert 1.toJson == "2"
-```
-
-## `parseJson` and exception tracking
-
-Unfortunately, `std/json`'s `parseJson` can raise an `Exception`, so proper exception
-tracking breaks, eg
-
-```nim
-
-## Fails to compile:
-## Error: parseJson(me, false, false) can raise an unlisted exception: Exception
-
-import std/json
-
-{.push raises:[].}
-
-type
-  MyAppError = object of CatchableError
-
-proc parseMe(me: string): JsonNode =
-  try:
-    return me.parseJson
-  except CatchableError as error:
-    raise newException(MyAppError, error.msg)
-
-assert """{"hello":"world"}""".parseMe == %* { "hello": "world" }
-```
-
-This is due to `std/json`'s `parseJson` incorrectly raising `Exception`. This can be
-worked around by instead importing `serde` and calling its `JsonNode.parse` routine.
-Note that `serde`'s `JsonNode.parse` returns a `Result[JsonNode, CatchableError]`
-instead of just a plain `JsonNode` object as in `std/json`'s `parseJson`:
-
-```nim
-import pkg/serde/json
-
-{.push raises:[].}
-
-type
-  MyAppError = object of CatchableError
-
-proc parseMe(me: string): JsonNode {.raises: [MyAppError].} =
-  without parsed =? JsonNode.parse(me), error:
-    raise newException(MyAppError, error.msg)
-  parsed
-
-assert """{"hello":"world"}""".parseMe == %* { "hello": "world" }
-```
-
-## Known issues
-
-There is a known issue when using mixins with generic overloaded procs like
-`fromJson`. At the time of mixin call, only the `fromJson` overloads in scope of
-the called mixin are available to be dispatched at runtime. There could be other
-`fromJson` overloads declared in other modules, but are not in scope at the time
-the mixin was called. Therefore, anytime `fromJson` is called targeting a
-declared overload, it may or may not be dispatchable. This can be worked around
-by forcing the `fromJson` overload into scope at compile time. For example, in
-your application where the `fromJson` overload is defined, at the bottom of the
-module add:
 ```nim
 static: MyType.fromJson("")
 ```
+
 This will ensure that the `MyType.fromJson` overload is dispatchable.
 
-The basic types that serde supports should already have their overloads forced
-in scope in [the `deserializer`
-module](./serde/json/deserializer.nim#L340-L356).
+The basic types that serde supports should already have their overloads forced in scope in [the `deserializer` module](./serde/json/deserializer.nim#L340-L356).
 
 For an illustration of the problem, please see this [narrow example](https://github.com/gmega/serialization-bug/tree/main/narrow) by [@gmega](https://github.com/gmega).
