@@ -1,132 +1,118 @@
 # nim-serde
 
-A serialization and deserialization library for Nim supporting multiple wire formats.
+A serialization and deserialization library for Nim supporting multiple formats.
 
-## Supported Wire Formats
+## Supported Serialization Formats
 
-nim-serde currently supports the following wire formats:
+nim-serde currently supports the following serialization formats:
 
 - **JSON**: A text-based data interchange format. [See JSON](serde/json/README.md) for details.
 - **CBOR**: A binary data format following RFC 8949. [See CBOR](serde/cbor/README.md) for details.
 
-## Serde modes
+## Quick Examples
 
-`nim-serde` uses three different modes to control de/serialization:
-
-```nim
-OptIn
-OptOut
-Strict
-```
-
-Modes can be set in the `{.serialize.}` and/or `{.deserialize.}` pragmas on type
-definitions. Each mode has a different meaning depending on if the type is being
-serialized or deserialized. Modes can be set by setting `mode` in the `serialize` or
-`deserialize` pragma annotation, eg:
+### JSON Serialization and Deserialization
 
 ```nim
-type MyType {.serialize(mode=Strict).} = object
-  field1: bool
-  field2: bool
-```
+import ./serde/json
+import questionable/results
 
-### Modes reference
+# Define a type
+type Person = object
+  name {.serialize.}: string
+  age {.serialize.}: int
+  address: string # Not serialized by default in OptIn mode
 
-|                    | serialize                                                                                                                           | deserialize                                                                                                                                                                                                 |
-|:-------------------|:------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `SerdeMode.OptOut` | All object fields will be serialized, except fields marked with `{.serialize(ignore=true).}`.                                       | All json keys will be deserialized, except fields marked with `{.deserialize(ignore=true).}`. No error if extra json fields exist.                                                                          |
-| `SerdeMode.OptIn`  | Only fields marked with `{.serialize.}` will be serialized. Fields marked with `{.serialize(ignore=true).}` will not be serialized. | Only fields marked with `{.deserialize.}` will be deserialized. Fields marked with `{.deserialize(ignore=true).}` will not be deserialized. A `SerdeError` error is raised if the field is missing in json. |
-| `SerdeMode.Strict` | All object fields will be serialized, regardless if the field is marked with `{.serialize(ignore=true).}`.                          | Object fields and json fields must match exactly, otherwise a `SerdeError` is raised.                                                                                                                       |
+# Create an instance
+let person = Person(name: "John Doe", age: 30, address: "123 Main St")
 
-## Default modes
+# Serialization
+echo "JSON Serialization Example"
+let jsonString = person.toJson(pretty = true)
+echo jsonString
 
-`nim-serde` will de/serialize types if they are not annotated with `serialize` or
-`deserialize`, but will assume a default mode. By default, with no pragmas specified,
-`serde` will always serialize in `OptIn` mode, meaning any fields to b Additionally, if
-the types are annotated, but a mode is not specified, `serde` will assume a (possibly
-different) default mode.
-
-```nim
-# Type is not annotated
-# A default mode of OptIn (for serialize) and OptOut (for deserialize) is assumed.
-
-type MyObj = object
-  field1: bool
-  field2: bool
-
-# Type is annotated, but mode not specified
-# A default mode of OptOut is assumed for both serialize and deserialize.
-
-type MyObj {.serialize, deserialize.} = object
-  field1: bool
-  field2: bool
-```
-
-### Default mode reference
-
-|                               | serialize | deserialize |
-|:------------------------------|:----------|:------------|
-| Default (no pragma)           | `OptIn`   | `OptOut`    |
-| Default (pragma, but no mode) | `OptOut`  | `OptOut`    |
-
-## Serde field options
-Type fields can be annotated with `{.serialize.}` and `{.deserialize.}` and properties
-can be set on these pragmas, determining de/serialization behavior.
-
-For example,
-
-```nim
-import pkg/serde/json
-
-type
-  Person {.serialize(mode=OptOut), deserialize(mode=OptIn).} = object
-    id {.serialize(ignore=true), deserialize(key="personid").}: int
-    name: string
-    birthYear: int
-    address: string
-    phone: string
-
-let person = Person(
-              name: "Lloyd Christmas",
-              birthYear: 1970,
-              address: "123 Sesame Street, Providence, Rhode Island  12345",
-              phone: "555-905-justgivemethedamnnumber!⛽️🔥")
-
-let createRequest = """{
-  "name": "Lloyd Christmas",
-  "birthYear": 1970,
-  "address": "123 Sesame Street, Providence, Rhode Island  12345",
-  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
+# Verify serialization output
+let expectedJson = """{
+  "name": "John Doe",
+  "age": 30
 }"""
-assert person.toJson(pretty=true) == createRequest
+assert jsonString == expectedJson
 
-let createResponse = """{
-  "personid": 1,
-  "name": "Lloyd Christmas",
-  "birthYear": 1970,
-  "address": "123 Sesame Street, Providence, Rhode Island  12345",
-  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
-}"""
-assert !Person.fromJson(createResponse) == Person(id: 1)
+# Deserialization
+echo "\nJSON Deserialization Example"
+let jsonData = """{"name":"Jane Doe","age":28,"address":"456 Oak Ave"}"""
+let result = Person.fromJson(jsonData)
+
+# check if deserialization was successful
+assert result.isSuccess
+
+# get the deserialized value
+let parsedPerson = !result
+
+echo parsedPerson
+#[
+Expected Output:
+Person(
+  name: "Jane Doe",
+  age: 28,
+  address: "456 Oak Ave"
+)
+]#
+
 ```
 
-### `key`
-Specifying a `key`, will alias the field name. When seriazlizing, json will be written
-with `key` instead of the field name. When deserializing, the json must contain `key`
-for the field to be deserialized.
+### CBOR Serialization and Deserialization
 
-### `ignore`
-Specifying `ignore`, will prevent de/serialization on the field.
+```nim
+import ./serde/cbor
+import questionable/results
+import std/streams
 
-### Serde field options reference
+# Define a type
+type Person = object
+  name: string
+  age: int
+  address: string
 
-|          | serialize                                                                                                  | deserialize                                                                                                      |
-|:---------|:-----------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------|
-| `key`    | aliases the field name in json                                                                             | deserializes the field if json contains `key`                                                                    |
-| `ignore` | <li>**OptOut:** field not serialized</li><li>**OptIn:** field not serialized</li><li>**Strict:** field serialized</li> | <li>**OptOut:** field not deserialized</li><li>**OptIn:** field not deserialized</li><li>**Strict:** field deserialized</li> |
+# Create an instance
+let person = Person(name: "John Doe", age: 30, address: "123 Main St")
 
+# Serialization using Stream API
+echo "CBOR Stream API Serialization"
+let stream = newStringStream()
+let writeResult = stream.writeCbor(person)
+assert writeResult.isSuccess
 
+# Serialization using toCbor function
+echo "\nCBOR toCbor Function Serialization"
+let cborResult = toCbor(person)
+assert cborResult.isSuccess
 
+let serializedCbor = !cborResult
+
+# Deserialization
+echo "\nCBOR Deserialization"
+let personResult = Person.fromCbor(serializedCbor)
+
+# check if deserialization was successful
+assert personResult.isSuccess
+
+# get the deserialized value
+let parsedPerson = !personResult
+echo parsedPerson
+
+#[
+Expected Output:
+Person(
+  name: "John Doe",
+  age: 30,
+  address: "123 Main St"
+)
+]#
+
+```
+
+Refer to the [json](serde/json/README.md) and [cbor](serde/cbor/README.md) files for more comprehensive examples.
 
 ## Known Issues
 
