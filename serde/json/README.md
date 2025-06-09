@@ -1,17 +1,22 @@
 # nim-serde JSON
 
-Explore JSON serialization and deserialization using nim-serde, an improved alternative to `std/json`.
+The JSON module in nim-serde provides serialization and deserialization for Nim values, offering an improved alternative to the standard `std/json` library. Unlike the standard library, nim-serde JSON implements a flexible system of serialization/deserialization modes that give developers precise control over how Nim objects are converted to and from JSON.
 
 ## Table of Contents
 - [nim-serde JSON](#nim-serde-json)
   - [Table of Contents](#table-of-contents)
+  - [Serde Modes](#serde-modes)
+    - [Modes Overview](#modes-overview)
+    - [Default Modes](#default-modes)
+    - [Field Options](#field-options)
   - [Serialization API](#serialization-api)
     - [Basic Serialization with `%` operator](#basic-serialization-with--operator)
     - [Object Serialization](#object-serialization)
-    - [Serialization with `%*`](#serialization-with-)
+    - [Inlining JSON Directly in Code with `%*`](#inlining-json-directly-in-code-with-)
     - [Converting to JSON String with `toJson`](#converting-to-json-string-with-tojson)
     - [Serialization Modes](#serialization-modes)
     - [Field Customization for Serialization](#field-customization-for-serialization)
+  - [Custom Type Serialization](#custom-type-serialization)
   - [Deserialization API](#deserialization-api)
     - [Basic Deserialization with `fromJson`](#basic-deserialization-with-fromjson)
     - [Error Handling](#error-handling)
@@ -19,8 +24,110 @@ Explore JSON serialization and deserialization using nim-serde, an improved alte
     - [Deserialization Modes](#deserialization-modes)
     - [Field Customization for Deserialization](#field-customization-for-deserialization)
   - [Using as a Drop-in Replacement for std/json](#using-as-a-drop-in-replacement-for-stdjson)
-  - [Custom Type Serialization](#custom-type-serialization)
   - [Implementation Details](#implementation-details)
+
+
+## Serde Modes
+This implementation supports three different modes to control de/serialization:
+
+```nim
+OptIn
+OptOut
+Strict
+```
+
+Modes can be set in the `{.serialize.}` and/or `{.deserialize.}` pragmas on type
+definitions. Each mode has a different meaning depending on if the type is being
+serialized or deserialized. Modes can be set by setting `mode` in the `serialize` or
+`deserialize` pragma annotation, eg:
+
+```nim
+type MyType {.serialize(mode=Strict).} = object
+  field1: bool
+  field2: bool
+```
+
+### Modes Overview
+
+| Mode | Serialize | Deserialize |
+|:-----|:----------|:------------|
+| `OptOut` | All object fields will be serialized, except fields marked with `{.serialize(ignore=true).}`. | All JSON keys will be deserialized, except fields marked with `{.deserialize(ignore=true).}`. No error if extra JSON fields exist. |
+| `OptIn` | Only fields marked with `{.serialize.}` will be serialized. Fields marked with `{.serialize(ignore=true).}` will not be serialized. | Only fields marked with `{.deserialize.}` will be deserialized. Fields marked with `{.deserialize(ignore=true).}` will not be deserialized. A `SerdeError` is raised if the field is missing in JSON. |
+| `Strict` | All object fields will be serialized, regardless if the field is marked with `{.serialize(ignore=true).}`. | Object fields and JSON fields must match exactly, otherwise a `SerdeError` is raised. |
+
+### Default Modes
+
+Types can be serialized and deserialized even without explicit annotations, using default modes. Without any pragmas, types are serialized in OptIn mode and deserialized in OptOut mode. When types have pragmas but no specific mode is set, OptOut mode is used for both serialization and deserialization.
+
+
+| Context | Serialize | Deserialize |
+|:--------|:----------|:------------|
+| Default (no pragma) | `OptIn` | `OptOut` |
+| Default (pragma, but no mode) | `OptOut` | `OptOut` |
+
+```nim
+# Type is not annotated
+# A default mode of OptIn (for serialize) and OptOut (for deserialize) is assumed.
+type MyObj1 = object
+  field1: bool
+  field2: bool
+
+# Type is annotated, but mode not specified
+# A default mode of OptOut is assumed for both serialize and deserialize.
+type MyObj2 {.serialize, deserialize.} = object
+  field1: bool
+  field2: bool
+```
+
+### Field Options
+
+Individual fields can be customized using the `{.serialize.}` and `{.deserialize.}` pragmas with additional options that control how each field is processed during serialization and deserialization
+
+
+|          | serialize                                                                                                  | deserialize                                                                                                      |
+|:---------|:-----------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------|
+| `key`    | aliases the field name in json                                                                             | deserializes the field if json contains `key`                                                                    |
+| `ignore` | <li>**OptOut:** field not serialized</li><li>**OptIn:** field not serialized</li><li>**Strict:** field serialized</li> | <li>**OptOut:** field not deserialized</li><li>**OptIn:** field not deserialized</li><li>**Strict:** field deserialized</li> |
+
+
+Example with field options:
+
+```nim
+import pkg/serde/json
+
+type
+  Person {.serialize(mode=OptOut), deserialize(mode=OptIn).} = object
+    id {.serialize(ignore=true), deserialize(key="personid").}: int
+    name: string
+    birthYear: int
+    address: string
+    phone: string
+
+let person = Person(
+              name: "Lloyd Christmas",
+              birthYear: 1970,
+              address: "123 Sesame Street, Providence, Rhode Island  12345",
+              phone: "555-905-justgivemethedamnnumber!⛽️🔥")
+
+let createRequest = """{
+  "name": "Lloyd Christmas",
+  "birthYear": 1970,
+  "address": "123 Sesame Street, Providence, Rhode Island  12345",
+  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
+}"""
+assert person.toJson(pretty=true) == createRequest
+
+let createResponse = """{
+  "personid": 1,
+  "name": "Lloyd Christmas",
+  "birthYear": 1970,
+  "address": "123 Sesame Street, Providence, Rhode Island  12345",
+  "phone": "555-905-justgivemethedamnnumber!⛽️🔥"
+}"""
+assert !Person.fromJson(createResponse) == Person(id: 1)
+```
+
+More examples can be found in [Serialization Modes](#serialization-modes) and [Deserialization Modes](#deserialization-modes).
 
 ## Serialization API
 
@@ -67,16 +174,19 @@ assert jsonNode["age"].getInt == 30
 assert "address" notin jsonNode
 ```
 
-### Serialization with `%*`
+### Inlining JSON Directly in Code with `%*`
 
 The `%*` macro provides a more convenient way to create JSON objects:
 
 ```nim
 import pkg/serde/json
 
-let jsonObj = %*{
-  "name": "John",
-  "age": 30,
+let
+  name = "John"
+  age = 30
+  jsonObj = %*{
+  "name": name,
+  "age": age,
   "hobbies": ["reading", "coding"],
   "address": {
     "street": "123 Main St",
@@ -85,8 +195,8 @@ let jsonObj = %*{
 }
 
 assert jsonObj.kind == JObject
-assert jsonObj["name"].getStr == "John"
-assert jsonObj["age"].getInt == 30
+assert jsonObj["name"].getStr == name
+assert jsonObj["age"].getInt == age
 assert jsonObj["hobbies"].kind == JArray
 assert jsonObj["hobbies"][0].getStr == "reading"
 assert jsonObj["address"]["street"].getStr == "123 Main St"
@@ -169,6 +279,72 @@ assert "ssn" notin jsonNode
 # Convert to JSON string
 let jsonStr = toJson(person)
 assert jsonStr == """{"first_name":"John","last_name":"Doe","age":30}"""
+```
+
+## Custom Type Serialization
+
+You can extend nim-serde to support custom types by defining your own `%` operator overloads and `fromJson` procs:
+
+```nim
+import pkg/serde/json
+import pkg/serde/utils/errors
+import pkg/questionable/results
+import std/strutils
+
+# Define a custom type
+type
+  UserId = distinct int
+
+# Custom serialization for UserId
+proc `%`*(id: UserId): JsonNode =
+  %("user-" & $int(id))
+
+# Custom deserialization for UserId
+proc fromJson*(_: type UserId, json: JsonNode): ?!UserId =
+  if json.kind != JString:
+    return failure(newSerdeError("Expected string for UserId, got " & $json.kind))
+  
+  let str = json.getStr()
+  if str.startsWith("user-"):
+    let idStr = str[5..^1]
+    try:
+      let id = parseInt(idStr)
+      success(UserId(id))
+    except ValueError:
+      failure(newSerdeError("Invalid UserId format: " & str))
+  else:
+    failure(newSerdeError("UserId must start with 'user-' prefix"))
+
+# Test serialization
+let userId = UserId(42)
+let jsonNode = %userId
+assert jsonNode.kind == JString
+assert jsonNode.getStr() == "user-42"
+
+# Test deserialization
+let jsonStr = "\"user-42\""
+let parsedJson = !JsonNode.parse(jsonStr)
+let result = UserId.fromJson(parsedJson)
+assert result.isSuccess
+assert int(!result) == 42
+
+# Test in object context
+type User {.serialize(mode = OptOut).} = object
+  id: UserId
+  name: string
+
+let user = User(id: UserId(123), name: "John")
+let userJson = %user
+assert userJson.kind == JObject
+assert userJson["id"].getStr() == "user-123"
+assert userJson["name"].getStr() == "John"
+
+# Test deserialization of object with custom type
+let userJsonStr = """{"id":"user-123","name":"John"}"""
+let userResult = User.fromJson(userJsonStr)
+assert userResult.isSuccess
+assert int((!userResult).id) == 123
+assert (!userResult).name == "John"
 ```
 
 ## Deserialization API
@@ -340,72 +516,6 @@ assert parsedNode["name"].getStr == "John"
 
 # Pretty printing
 let prettyJson = pretty(jsonNode)
-```
-
-## Custom Type Serialization
-
-You can extend nim-serde to support custom types by defining your own `%` operator overloads and `fromJson` procs:
-
-```nim
-import pkg/serde/json
-import pkg/serde/utils/errors
-import pkg/questionable/results
-import std/strutils
-
-# Define a custom type
-type
-  UserId = distinct int
-
-# Custom serialization for UserId
-proc `%`*(id: UserId): JsonNode =
-  %("user-" & $int(id))
-
-# Custom deserialization for UserId
-proc fromJson*(_: type UserId, json: JsonNode): ?!UserId =
-  if json.kind != JString:
-    return failure(newSerdeError("Expected string for UserId, got " & $json.kind))
-  
-  let str = json.getStr()
-  if str.startsWith("user-"):
-    let idStr = str[5..^1]
-    try:
-      let id = parseInt(idStr)
-      success(UserId(id))
-    except ValueError:
-      failure(newSerdeError("Invalid UserId format: " & str))
-  else:
-    failure(newSerdeError("UserId must start with 'user-' prefix"))
-
-# Test serialization
-let userId = UserId(42)
-let jsonNode = %userId
-assert jsonNode.kind == JString
-assert jsonNode.getStr() == "user-42"
-
-# Test deserialization
-let jsonStr = "\"user-42\""
-let parsedJson = !JsonNode.parse(jsonStr)
-let result = UserId.fromJson(parsedJson)
-assert result.isSuccess
-assert int(!result) == 42
-
-# Test in object context
-type User {.serialize(mode = OptOut).} = object
-  id: UserId
-  name: string
-
-let user = User(id: UserId(123), name: "John")
-let userJson = %user
-assert userJson.kind == JObject
-assert userJson["id"].getStr() == "user-123"
-assert userJson["name"].getStr() == "John"
-
-# Test deserialization of object with custom type
-let userJsonStr = """{"id":"user-123","name":"John"}"""
-let userResult = User.fromJson(userJsonStr)
-assert userResult.isSuccess
-assert int((!userResult).id) == 123
-assert (!userResult).name == "John"
 ```
 
 ## Implementation Details

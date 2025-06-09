@@ -1,15 +1,18 @@
 # nim-serde CBOR
 
-This README details the usage of CBOR serialization and deserialization features offered by nim-serde, in compliance with [RFC 8949](https://datatracker.ietf.org/doc/html/rfc8949).
+The CBOR module in nim-serde provides serialization and deserialization for Nim values following [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html). Unlike the JSON implementation, CBOR offers a stream-based API that enables direct binary serialization without intermediate representations.
+
+> Note: While the JSON implementation supports serde modes via pragmas, the current CBOR implementation does not support the `serialize` and `deserialize` pragmas. The library will raise an assertion error if you try to use these pragmas with CBOR serialization.
+
 
 ## Table of Contents
 - [nim-serde CBOR](#nim-serde-cbor)
   - [Table of Contents](#table-of-contents)
   - [Serialization API](#serialization-api)
-    - [Basic Serialization with Stream API](#basic-serialization-with-stream-api)
-    - [Object Serialization](#object-serialization)
-    - [Custom Type Serialization](#custom-type-serialization)
-    - [Converting to CBOR with `toCbor`](#converting-to-cbor-with-tocbor)
+    - [Stream API: Primitive Type and Sequence Serialization](#stream-api-primitive-type-and-sequence-serialization)
+    - [Stream API: Object Serialization](#stream-api-object-serialization)
+    - [Stream API: Custom Type Serialization](#stream-api-custom-type-serialization)
+    - [Serialization without Stream API: `toCbor`](#serialization-without-stream-api-tocbor)
     - [Working with CborNode](#working-with-cbornode)
     - [Convenience Functions for CborNode](#convenience-functions-for-cbornode)
   - [Deserialization API](#deserialization-api)
@@ -24,7 +27,7 @@ This README details the usage of CBOR serialization and deserialization features
 
 The nim-serde CBOR serialization API provides several ways to convert Nim values to CBOR.
 
-### Basic Serialization with Stream API
+### Stream API: Primitive Type and Sequence Serialization
 
 The `writeCbor` function writes Nim values to a stream in CBOR format:
 
@@ -50,7 +53,7 @@ discard stream.writeCbor(@[1, 2, 3])   # Sequence
 let cborData = stream.data
 ```
 
-### Object Serialization
+### Stream API: Object Serialization
 
 Objects can be serialized to CBOR format using the stream API:
 
@@ -78,7 +81,7 @@ discard stream.writeCbor(person)
 let cborData = stream.data
 ```
 
-### Custom Type Serialization
+### Stream API: Custom Type Serialization
 
 You can extend nim-serde to support custom types by defining your own `writeCbor` procs:
 
@@ -114,7 +117,7 @@ discard userStream.writeCbor(user)
 let userCborData = userStream.data
 ```
 
-### Converting to CBOR with `toCbor`
+### Serialization without Stream API: `toCbor`
 
 The `toCbor` function can be used to directly convert a Nim value to CBOR binary data:
 
@@ -363,7 +366,7 @@ For deserialization, the library parses CBOR data into a `CborNode` representati
 
 ### Current Limitations
 
-While the JSON implementation supports serde modes via pragmas, the current CBOR implementation does not support the `serialize` and `deserialize` pragmas. The library will raise an assertion error if you try to use these pragmas with CBOR serialization.
+This implementation does not support the `serialize` and `deserialize` pragmas. The library will raise an assertion error if you try to use these pragmas with CBOR serialization.
 
 ```nim
 import pkg/serde/cbor

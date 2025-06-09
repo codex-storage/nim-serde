@@ -36,10 +36,6 @@ template assertNoPragma*(value, pragma, msg) =
     when value.hasCustomPragma(pragma):
       raiseAssert(msg)
 
-macro dot*(obj: object, fld: string): untyped =
-  ## Turn ``obj.dot("fld")`` into ``obj.fld``.
-  newDotExpr(obj, newIdentNode(fld.strVal))
-
 func floatSingle*(half: uint16): float32 =
   ## Convert a 16-bit float to 32-bits.
   func ldexp(
