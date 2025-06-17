@@ -21,7 +21,7 @@ import questionable/results
 type Person = object
   name {.serialize.}: string
   age {.serialize.}: int
-  address: string # Not serialized by default in OptIn mode
+  address: string # By default, serde will not serialize non-annotated fields (OptIn mode)
 
 # Create an instance
 let person = Person(name: "John Doe", age: 30, address: "123 Main St")
@@ -70,7 +70,7 @@ import std/streams
 
 # Define a type
 type Person = object
-  name: string
+  name: string # Unlike JSON, CBOR always serializes all fields, and they do not need to be annotated
   age: int
   address: string
 

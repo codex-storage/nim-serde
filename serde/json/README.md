@@ -67,12 +67,14 @@ Types can be serialized and deserialized even without explicit annotations, usin
 
 ```nim
 # Type is not annotated
-# A default mode of OptIn (for serialize) and OptOut (for deserialize) is assumed.
+# If you don't annotate the type, serde assumes OptIn by default for serialization, and OptOut for 
+# deserialization. This means your types will be serialized to an empty string, which is probably not what you want:
 type MyObj1 = object
   field1: bool
   field2: bool
 
-# Type is annotated, but mode not specified
+# If you annotate your type but do not specify the mode, serde will default to OptOut for
+# both serialize and de-serialize, meaning all fields get serialized/de-serialized by default:
 # A default mode of OptOut is assumed for both serialize and deserialize.
 type MyObj2 {.serialize, deserialize.} = object
   field1: bool
@@ -390,7 +392,7 @@ assert errorResult.error of UnexpectedKindError
 
 ### Parsing JSON with `JsonNode.parse`
 
-For parsing raw JSON without immediate deserialization:
+To parse JSON string into a `JsonNode` tree instead of a deserializing to a concrete type, use `JsonNode.parse`:
 
 ```nim
 import pkg/serde/json
