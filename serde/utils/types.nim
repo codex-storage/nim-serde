@@ -1,6 +1,7 @@
 type
   SerdeError* = object of CatchableError
   JsonParseError* = object of SerdeError
+  CborParseError* = object of SerdeError
   UnexpectedKindError* = object of SerdeError
   SerdeMode* = enum
     OptOut

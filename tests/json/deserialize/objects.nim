@@ -99,7 +99,8 @@ suite "json - deserialize objects":
       myint: int
 
     let expected = MyRef(mystring: "abc", myint: 1)
-    let byteArray = """{
+    let byteArray =
+      """{
             "mystring": "abc",
             "myint": 1
           }""".toBytes

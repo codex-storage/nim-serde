@@ -2,8 +2,8 @@ import std/json as stdjson
 
 import pkg/questionable/results
 
-import ./errors
-import ./types
+import ../utils/errors
+import ../utils/types
 
 {.push raises: [].}
 

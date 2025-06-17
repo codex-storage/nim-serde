@@ -10,15 +10,13 @@ import pkg/stew/byteutils
 import pkg/stint
 
 import ./stdjson
-import ./pragmas
-import ./types
+import ../utils/pragmas
+import ../utils/types
 
 export chronicles except toJson
 export stdjson
 export pragmas
 export types
-
-{.push raises: [].}
 
 logScope:
   topics = "nimserde json serializer"

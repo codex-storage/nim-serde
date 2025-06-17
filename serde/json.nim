@@ -1,9 +1,9 @@
 import ./json/parser
 import ./json/deserializer
 import ./json/stdjson
-import ./json/pragmas
+import ./utils/pragmas
 import ./json/serializer
-import ./json/types
+import ./utils/types
 
 export parser
 export deserializer

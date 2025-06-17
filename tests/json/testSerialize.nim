@@ -50,7 +50,8 @@ suite "json serialization - serialize":
 
     let json = %*{"myobj": myobj, "mystuint": mystuint}
 
-    let expected = """{
+    let expected =
+      """{
                         "myobj": {
                           "mystring": "abc",
                           "myint": 123,
@@ -69,7 +70,8 @@ suite "json serialization - serialize":
 
     let obj = %MyObj(mystring: "abc", myint: 1, mybool: true)
 
-    let expected = """{
+    let expected =
+      """{
                         "mystring": "abc",
                         "myint": 1
                       }""".flatten
@@ -83,7 +85,8 @@ suite "json serialization - serialize":
 
     let obj = %MyRef(mystring: "abc", myint: 1)
 
-    let expected = """{
+    let expected =
+      """{
                         "mystring": "abc",
                         "myint": 1
                       }""".flatten
