@@ -322,7 +322,7 @@ proc fromJson*(T: typedesc[StUint or StInt], json: string): ?!T =
   T.fromJson(newJString(json))
 
 proc fromJson*[T: ref object or object](_: type ?T, json: string): ?!Option[T] =
-  when T is (StUInt or StInt):
+  when T is (StUint or StInt):
     let jsn = newJString(json)
   else:
     let jsn = ?JsonNode.parse(json) # full qualification required in-module only
