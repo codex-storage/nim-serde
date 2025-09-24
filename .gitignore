@@ -6,3 +6,4 @@ nimble.paths
 .idea
 vendor/
 .vscode/
+nimbledeps
