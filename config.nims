@@ -1,7 +1,8 @@
 --styleCheck:usages
 --styleCheck:error
 
-# begin Nimble config (version 1)
-when fileExists("nimble.paths"):
+# begin Nimble config (version 2)
+--noNimblePath
+when withDir(thisDir(), system.fileExists("nimble.paths")):
   include "nimble.paths"
 # end Nimble config
