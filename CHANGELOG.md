@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- Update chronicles [\#33](https://github.com/codex-storage/nim-serde/pull/33) ([markspanbroek](https://github.com/markspanbroek))
 - fix loglevel and add log scope to allow filtering and avoid log pollution [\#30](https://github.com/codex-storage/nim-serde/pull/30) ([dryajov](https://github.com/dryajov))
 - ci: add matrix status job [\#29](https://github.com/codex-storage/nim-serde/pull/29) ([veaceslavdoina](https://github.com/veaceslavdoina))
 
