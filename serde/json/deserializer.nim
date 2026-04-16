@@ -5,7 +5,6 @@ import std/sets
 import std/strutils
 import std/tables
 import std/typetraits
-import pkg/chronicles except toJson
 import pkg/stew/byteutils
 import pkg/stint
 import pkg/questionable
@@ -19,7 +18,6 @@ import ./types
 import ./helpers
 
 export parser
-export chronicles except toJson
 export stdjson
 export pragmas
 export results
@@ -27,9 +25,6 @@ export sets
 export types
 
 {.push raises: [].}
-
-logScope:
-  topics = "nimserde json deserializer"
 
 template expectJsonKind(
     expectedType: type, expectedKinds: set[JsonNodeKind], json: JsonNode

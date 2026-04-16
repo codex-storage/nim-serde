@@ -4,7 +4,6 @@ import std/strutils
 import std/tables
 import std/typetraits
 
-import pkg/chronicles except toJson
 import pkg/questionable
 import pkg/stew/byteutils
 import pkg/stint
@@ -18,9 +17,6 @@ export pragmas
 export types
 
 {.push raises: [].}
-
-logScope:
-  topics = "nimserde json serializer"
 
 proc `%`*(s: string): JsonNode =
   newJString(s)
