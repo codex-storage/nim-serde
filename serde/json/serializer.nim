@@ -13,7 +13,6 @@ import ./stdjson
 import ./pragmas
 import ./types
 
-export chronicles except toJson
 export stdjson
 export pragmas
 export types
@@ -91,35 +90,25 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
   let mode = T.getSerdeMode(serialize)
 
   for name, value in o.fieldPairs:
-    logScope:
-      field = $T & "." & name
-      mode
-
     let opts = getSerdeFieldOptions(serialize, name, value)
     let hasSerialize = value.hasCustomPragma(serialize)
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
-    # logScope moved into proc due to chronicles issue: https://github.com/status-im/nim-chronicles/issues/148
-    logScope:
-      topics = "serde json serialization"
-
     case mode
     of OptIn:
       if not hasSerialize:
-        trace "object field not marked with serialize, skipping"
         skip = true
       elif opts.ignore:
         skip = true
     of OptOut:
       if opts.ignore:
-        trace "object field opted out of serialization ('ignore' is set), skipping"
         skip = true
       elif hasSerialize and opts.key == name: # all serialize params are default
-        warn "object field marked as serialize in OptOut mode, but 'ignore' not set, field will be serialized"
+        discard
     of Strict:
       if opts.ignore:
         # unable to figure out a way to make this a compile time check
-        warn "object field marked as 'ignore' while in Strict mode, field will be serialized anyway"
+        discard
 
     if not skip:
       jsonObj[opts.key] = %value
