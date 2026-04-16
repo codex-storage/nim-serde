@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nim: [2.0.16, 2.2.4]
+        nim: [2.0.16, 2.2.8]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
