@@ -1,11 +1,12 @@
 # Changelog
 
-## [v1.2.3](https://github.com/logos-storage/nim-serde/tree/v1.2.3) (2026-04-20)
+## [Unreleased](https://github.com/logos-storage/nim-serde/tree/HEAD)
 
-[Full Changelog](https://github.com/logos-storage/nim-serde/compare/v.1.2.2...v1.2.3)
+[Full Changelog](https://github.com/logos-storage/nim-serde/compare/v.1.2.2...HEAD)
 
 **Merged pull requests:**
 
+- chore: increment nimble version [\#36](https://github.com/logos-storage/nim-serde/pull/36) ([2-towns](https://github.com/2-towns))
 - chore: remove logs  [\#35](https://github.com/logos-storage/nim-serde/pull/35) ([2-towns](https://github.com/2-towns))
 - chore: rename Codex to Logos Storage [\#34](https://github.com/logos-storage/nim-serde/pull/34) ([2-towns](https://github.com/2-towns))
 - Update chronicles [\#33](https://github.com/logos-storage/nim-serde/pull/33) ([markspanbroek](https://github.com/markspanbroek))
