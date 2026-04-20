@@ -99,6 +99,9 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     of OptOut:
       if opts.ignore:
         skip = true
+    of Strict:
+      # required: Nim case on enum must cover all variants
+      discard
 
     if not skip:
       jsonObj[opts.key] = %value
