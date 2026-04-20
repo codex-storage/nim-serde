@@ -202,9 +202,6 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
     of Strict:
       if opts.key notin json:
         return failure newSerdeError("object field missing in json: " & opts.key)
-      elif opts.ignore:
-        # unable to figure out a way to make this a compile time check
-        discard
     of OptIn:
       if not hasDeserializePragma:
         skip = true
@@ -215,8 +212,6 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
     of OptOut:
       if opts.ignore:
         skip = true
-      elif hasDeserializePragma and opts.key == name:
-        discard
 
     if not skip:
       if isOptionalValue:

@@ -99,12 +99,6 @@ proc `%`*[T: object or ref object](obj: T): JsonNode =
     of OptOut:
       if opts.ignore:
         skip = true
-      elif hasSerialize and opts.key == name: # all serialize params are default
-        discard
-    of Strict:
-      if opts.ignore:
-        # unable to figure out a way to make this a compile time check
-        discard
 
     if not skip:
       jsonObj[opts.key] = %value
