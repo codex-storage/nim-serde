@@ -5,7 +5,6 @@ import std/sets
 import std/strutils
 import std/tables
 import std/typetraits
-import pkg/chronicles except toJson
 import pkg/stew/byteutils
 import pkg/stint
 import pkg/questionable
@@ -19,7 +18,6 @@ import ./types
 import ./helpers
 
 export parser
-export chronicles except toJson
 export stdjson
 export pragmas
 export results
@@ -27,9 +25,6 @@ export sets
 export types
 
 {.push raises: [].}
-
-logScope:
-  topics = "nimserde json deserializer"
 
 template expectJsonKind(
     expectedType: type, expectedKinds: set[JsonNodeKind], json: JsonNode
@@ -198,56 +193,36 @@ proc fromJson*[T: ref object or object](_: type T, json: JsonNode): ?!T =
     else:
       res
   ):
-    logScope:
-      field = $T & "." & name
-      mode
-
     let hasDeserializePragma = value.hasCustomPragma(deserialize)
     let opts = getSerdeFieldOptions(deserialize, name, value)
     let isOptionalValue = typeof(value) is Option
     var skip = false # workaround for 'continue' not supported in a 'fields' loop
 
-    # logScope moved into proc due to chronicles issue: https://github.com/status-im/nim-chronicles/issues/148
-    logScope:
-      topics = "serde json deserialization"
-
     case mode
     of Strict:
       if opts.key notin json:
         return failure newSerdeError("object field missing in json: " & opts.key)
-      elif opts.ignore:
-        # unable to figure out a way to make this a compile time check
-        warn "object field marked as 'ignore' while in Strict mode, field will be deserialized anyway"
     of OptIn:
       if not hasDeserializePragma:
-        trace "object field not marked as 'deserialize', skipping"
         skip = true
       elif opts.ignore:
-        trace "object field marked as 'ignore', skipping"
         skip = true
       elif opts.key notin json and not isOptionalValue:
         return failure newSerdeError("object field missing in json: " & opts.key)
     of OptOut:
       if opts.ignore:
-        trace "object field is opted out of deserialization ('ignore' is set), skipping"
         skip = true
-      elif hasDeserializePragma and opts.key == name:
-        warn "object field marked as deserialize in OptOut mode, but 'ignore' not set, field will be deserialized"
 
     if not skip:
       if isOptionalValue:
         let jsonVal = json{opts.key}
         without parsed =? typeof(value).fromJson(jsonVal), e:
-          trace "failed to deserialize field",
-            `type` = $typeof(value), json = jsonVal, error = e.msg
           return failure(e)
         value = parsed
 
       # not Option[T]
       elif opts.key in json and jsonVal =? json{opts.key}.catch and not jsonVal.isNil:
         without parsed =? typeof(value).fromJson(jsonVal), e:
-          trace "failed to deserialize field",
-            `type` = $typeof(value), json = jsonVal, error = e.msg
           return failure(e)
         value = parsed
 
