@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/logos-storage/nim-serde/tree/HEAD)
+## [v1.2.3](https://github.com/logos-storage/nim-serde/tree/v1.2.3) (2026-04-20)
 
-[Full Changelog](https://github.com/logos-storage/nim-serde/compare/v.1.2.2...HEAD)
+[Full Changelog](https://github.com/logos-storage/nim-serde/compare/v.1.2.2...v1.2.3)
 
 **Merged pull requests:**
 
